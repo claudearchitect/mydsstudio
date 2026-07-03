@@ -1,0 +1,71 @@
+{
+  "turnIndex": 1,
+  "latestUserText": "This is a brand-new session. No product, audience, or design signal has been captured yet. Begin the interview: call update_beliefs with an empty patch (there is nothing to commit yet) and call interact with mode \"ask\" to pose your opening question — what they're building and who it's for is the standard opening, but phrase it in your own words.",
+  "toolCalls": {
+    "ok": true,
+    "updateBeliefs": {
+      "toolUseId": "toolu_01XbV4JdgegCcnMHdrXSFRip",
+      "patch": {
+        "meta": {
+          "product": "",
+          "audience": "",
+          "personality": []
+        },
+        "tokens": [],
+        "confidence": [],
+        "rationale": []
+      }
+    },
+    "interact": {
+      "toolUseId": "toolu_01RLzEAh5NUWgM1EVbQD26Yk",
+      "interaction": {
+        "mode": "ask",
+        "question": "Let's start at the top — what are you building, and who's it for?",
+        "quickReplies": []
+      }
+    }
+  },
+  "beliefState": {
+    "schemaVersion": 1,
+    "meta": {
+      "product": "",
+      "audience": "",
+      "personality": []
+    },
+    "groups": {},
+    "rationale": [],
+    "events": [
+      {
+        "id": "e00",
+        "ts": "2026-07-03T20:40:25.208Z",
+        "kind": "session_start",
+        "payload": {}
+      },
+      {
+        "id": "e01",
+        "ts": "2026-07-03T20:40:34.069Z",
+        "kind": "update_beliefs",
+        "payload": {
+          "meta": {
+            "product": "",
+            "audience": "",
+            "personality": []
+          },
+          "tokens": [],
+          "confidence": [],
+          "rationale": []
+        }
+      },
+      {
+        "id": "e02",
+        "ts": "2026-07-03T20:40:34.069Z",
+        "kind": "interact",
+        "payload": {
+          "mode": "ask",
+          "question": "Let's start at the top — what are you building, and who's it for?",
+          "quickReplies": []
+        }
+      }
+    ]
+  }
+}
