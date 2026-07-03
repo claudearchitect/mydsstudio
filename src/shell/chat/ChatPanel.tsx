@@ -16,7 +16,6 @@ import type {
 } from "@/contracts";
 import { normalizeChatMessage } from "../messages/normalize";
 import type { TranscriptEntry } from "../state/transcript";
-import { StudioLogo } from "../Logo";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 
@@ -69,14 +68,6 @@ export function ChatPanel({
 
   return (
     <div className="flex h-full flex-col" data-testid="chat-panel">
-      <header className="flex items-center gap-2.5 border-b border-app-border px-4 py-3">
-        <StudioLogo />
-        <div>
-          <p className="text-sm font-semibold tracking-tight text-app-text">MyDS Studio</p>
-          <p className="text-xs text-app-text-muted">interview session</p>
-        </div>
-      </header>
-
       <MessageList
         transcript={transcript}
         liveInteraction={liveInteraction}

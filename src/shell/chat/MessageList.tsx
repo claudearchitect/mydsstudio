@@ -47,9 +47,20 @@ export function MessageList({
 }: MessageListProps) {
   return (
     <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" data-testid="message-list">
-      {transcript.map((entry) => (
-        <TranscriptRow key={entry.id} entry={entry} onRetry={onRetry} />
-      ))}
+      {transcript.map((entry) => {
+        // The current interaction is rendered once as the live card below, so
+        // skip its duplicate transcript row (they hold the same interaction
+        // object). During streaming the live card is hidden, so keep the row
+        // for conversation context — no duplicate arises then.
+        if (
+          !isStreaming &&
+          entry.kind === "agentInteraction" &&
+          entry.interaction === liveInteraction
+        ) {
+          return null;
+        }
+        return <TranscriptRow key={entry.id} entry={entry} onRetry={onRetry} />;
+      })}
 
       {isStreaming && (
         <div

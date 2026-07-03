@@ -52,26 +52,24 @@ export const renderComponent: RenderComponent = (state, componentId) => {
   const reveal = deriveRevealState(componentId, state, REVEAL_CONFIG);
 
   if (reveal === "absent") {
+    // Render the REAL component (on its neutral token fallbacks) rather than a
+    // labeled box, so the zero state reads as a genuine, if unresolved, design
+    // system — the user sees an actual button/card/input taking shape. Muted
+    // (desaturated + faded) to communicate "not decided yet"; it gains colour
+    // and sharpness as the relevant token groups earn confidence.
     return (
       <div
         data-component={componentId}
         data-reveal="absent"
+        title={`${label} — resolves as the interview learns your preferences`}
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: 48,
-          minWidth: 96,
-          padding: 12,
-          border: "1px dashed #d8d6cc",
-          borderRadius: 6,
-          color: "#a8a69c",
-          fontSize: 12,
-          fontFamily: "inherit",
+          display: "inline-flex",
+          maxWidth: "100%",
+          filter: "grayscale(0.85) opacity(0.4)",
           transition: REVEAL_TRANSITION,
         }}
       >
-        {label}
+        <Entry />
       </div>
     );
   }

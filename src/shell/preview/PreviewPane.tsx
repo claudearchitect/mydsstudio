@@ -22,13 +22,26 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { COMPONENT_MANIFEST, resolveTokens, type BeliefState, type RenderComponent } from "@/contracts";
+import { resolveTokens, type BeliefState, type RenderComponent } from "@/contracts";
 import { renderComponent as realRenderComponent } from "@/preview/renderComponent";
 import { lookupTokenValue } from "../controls/tokenLookup";
 import { withPendingPreview, type PendingPreviewEntry } from "../controls/pendingPreview";
 import { RegionSelectOverlay } from "../region/RegionSelectOverlay";
 import { ControlsBar } from "../controls/ControlsBar";
 import { rationaleClaimsFor } from "./rationaleLookup";
+
+/** Bento arrangement of the exemplar library on the paper canvas: a 6-column
+ * grid where each component gets a cell sized to its nature (nav spans the
+ * full width, card + heading are wide, the smaller controls share a row).
+ * Ordered for the grid, not the manifest. */
+const BENTO_LAYOUT: { id: string; span: string }[] = [
+  { id: "nav.default", span: "col-span-6" },
+  { id: "card.default", span: "col-span-3" },
+  { id: "heading.default", span: "col-span-3" },
+  { id: "button.primary", span: "col-span-2" },
+  { id: "input.text", span: "col-span-2" },
+  { id: "badge.default", span: "col-span-2" },
+];
 
 export interface PreviewPaneProps {
   beliefState: BeliefState;
@@ -66,6 +79,9 @@ export function PreviewPane({
   }
 
   const displayState = withPendingPreview(beliefState, pending);
+  // Zero state: the agent hasn't committed any token group yet. Show a short
+  // explainer so the bare canvas reads as "about to fill in", not broken.
+  const isZeroState = Object.keys(beliefState.groups).length === 0;
 
   function handlePendingChange(dottedRef: string, $value: string | number, $type: "color" | "dimension") {
     setPending((prev) => [...prev.filter((p) => p.dottedRef !== dottedRef), { dottedRef, $value, $type }]);
@@ -105,22 +121,46 @@ export function PreviewPane({
         </button>
       </header>
 
-      <div className="flex flex-1 items-center justify-center overflow-auto p-8">
+      <div className="flex flex-1 justify-center overflow-auto p-8">
         <div
-          className="ds-preview-root h-full w-full rounded-app-lg p-6 shadow-app-paper"
+          className="ds-preview-root h-fit w-full max-w-4xl rounded-app-lg p-6 shadow-app-paper"
           data-testid="ds-preview-root"
           style={resolveTokens(displayState) as CSSProperties}
         >
+          {isZeroState && (
+            <div
+              className="mb-5 rounded-app-md px-4 py-3 text-center"
+              style={{ background: "rgba(0,0,0,0.02)", border: "1px solid rgba(0,0,0,0.06)" }}
+              data-testid="preview-zero-note"
+            >
+              <p className="text-sm font-medium" style={{ color: "#2b2a26" }}>
+                Your design system takes shape here
+              </p>
+              <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed" style={{ color: "#6b6a63" }}>
+                As you answer, each component sharpens and gains colour. Faded pieces are still
+                being figured out; crisp ones are confirmed — comment on any of them to steer it.
+              </p>
+            </div>
+          )}
           <RegionSelectOverlay
             resolve={resolve}
             onSubmitComment={onRegionComment}
             disabled={disabled}
             rationaleFor={(componentId) => rationaleClaimsFor(beliefState, componentId)}
           >
-            <div className="flex flex-wrap items-start gap-4" data-testid="component-grid">
-              {COMPONENT_MANIFEST.map((entry) => (
-                <div key={entry.componentId} data-testid={`component-slot-${entry.componentId}`}>
-                  {renderComponent(displayState, entry.componentId)}
+            <div className="grid grid-cols-6 gap-3" data-testid="component-grid">
+              {BENTO_LAYOUT.map(({ id, span }) => (
+                <div
+                  key={id}
+                  data-testid={`component-slot-${id}`}
+                  className={`${span} flex items-center justify-center rounded-app-md p-4`}
+                  style={{
+                    background: "rgba(0,0,0,0.015)",
+                    border: "1px solid rgba(0,0,0,0.05)",
+                    minHeight: 92,
+                  }}
+                >
+                  {renderComponent(displayState, id)}
                 </div>
               ))}
             </div>
