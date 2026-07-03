@@ -81,7 +81,7 @@ export function Session({ renderComponent }: SessionProps) {
   // resumable — mirrors useSession's own restore guard.
   useEffect(() => {
     queueMicrotask(() => {
-      const restored = restoreSession();
+      const restored = restoreSession(turnMode.mode);
       if (restored && restored.transcript.length > 0) {
         setResume({
           has: true,
@@ -92,7 +92,7 @@ export function Session({ renderComponent }: SessionProps) {
         });
       }
     });
-  }, []);
+  }, [turnMode.mode]);
 
   // Gate SessionInner behind the health probe (see useTurnMode): rendering it
   // before the probe resolves would construct an agent against a provisional
@@ -111,7 +111,7 @@ export function Session({ renderComponent }: SessionProps) {
         onStart={(mode) => {
           // Fresh start — discard any prior snapshot so useSession doesn't
           // restore it, then mount a clean session in the chosen mode.
-          clearSession();
+          clearSession(mode);
           turnMode.setMode(mode);
           setSessionKey((k) => k + 1);
           setPhase("active");
@@ -134,7 +134,7 @@ export function Session({ renderComponent }: SessionProps) {
       onModeChange={turnMode.setMode}
       onLiveFailure={turnMode.reportLiveFailure}
       onNewSession={() => {
-        clearSession();
+        clearSession(turnMode.mode);
         setResume({ has: false });
         setPhase("welcome");
       }}
