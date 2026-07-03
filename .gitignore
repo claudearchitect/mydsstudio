@@ -40,6 +40,9 @@ private_notes.md
 # Claude Code machine-local settings (personal)
 .claude/settings.local.json
 
+# Claude Code agent worktrees (nested working copies — never commit)
+.claude/worktrees/
+
 # vercel
 .vercel
 
