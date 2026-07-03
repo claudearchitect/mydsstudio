@@ -69,4 +69,7 @@ Time spent:
 - **Tools / model:**
   Claude code with Fable for planning. Opus for orchestration. Sonnet for subagents.
 
-- **Transcripts:**
+- **Transcripts:** HTML transcripts of today's key Claude Code sessions live in [`transcripts/`](transcripts/):
+  - [V0 build orchestrator](transcripts/3accfb9b-14fe-43df-b4b4-8504808984f6/index.html) — the main session that ran Phase 0 → parallel workstreams → Phase 2 integration.
+  - [Planning agent](transcripts/f7d82486-9549-4725-91ea-dc90d817c8b7/index.html) — concept → implementation architecture → V0 plan restructured for parallel agents.
+  - [Polish agent](transcripts/7c5bb304-94f5-4c25-8587-b7d9436b97e7/index.html) — the "make it actually visual" feedback-driven polish loops.
