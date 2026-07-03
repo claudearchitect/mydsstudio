@@ -88,6 +88,7 @@ describe("runTurn — success path from a recorded fixture", () => {
       interactInput: handWrittenOpeningInteraction,
       updateBeliefsToolUseId: "toolu_fixture_update_beliefs_01",
       interactToolUseId: "toolu_fixture_interact_01",
+      userText: KICKOFF_INSTRUCTION,
     });
   });
 
@@ -321,7 +322,7 @@ describe("runTurn — request shape sent to the client", () => {
 
     expect(calls).toHaveLength(1);
     const params = calls[0].params as unknown as Record<string, unknown>;
-    expect(params.model).toBe("claude-opus-4-8");
+    expect(params.model).toBe("claude-sonnet-5");
     expect(params.max_tokens).toBe(16000);
     expect(params.thinking).toEqual({ type: "adaptive" });
     expect(params.output_config).toEqual({ effort: "high" });

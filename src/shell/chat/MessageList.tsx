@@ -5,10 +5,10 @@
  */
 "use client";
 
+import { useEffect, useRef } from "react";
 import type {
   BeliefState,
   Interaction,
-  NormalizedMessage,
   ProposalVariant,
   QuickReply,
   RenderComponent,
@@ -45,8 +45,23 @@ export function MessageList({
   onRetry,
   renderComponent,
 }: MessageListProps) {
+  // Keep the newest content in view: a new turn's question, a proposal card,
+  // or the streaming indicator all appear at the bottom, and without this the
+  // transcript silently grows past the fold with no cue. Pinned to the same
+  // signals that add height (transcript length, the live interaction, and the
+  // streaming text/flag).
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [transcript.length, liveInteraction, isStreaming, streamingText]);
+
   return (
-    <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4" data-testid="message-list">
+    <div
+      ref={scrollRef}
+      className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
+      data-testid="message-list"
+    >
       {transcript.map((entry) => {
         // The current interaction is rendered once as the live card below, so
         // skip its duplicate transcript row (they hold the same interaction
@@ -97,10 +112,10 @@ function TranscriptRow({
   if (entry.kind === "userMessage") {
     return (
       <div
-        className="ml-auto max-w-[85%] rounded-app-md bg-app-accent px-3 py-2 text-sm text-white shadow-app-card"
+        className="ml-auto max-w-[85%] whitespace-pre-wrap break-words rounded-app-md bg-app-accent px-3 py-2 text-sm text-white shadow-app-card"
         data-testid="transcript-user-message"
       >
-        {messageText(entry.message)}
+        {entry.displayText}
       </div>
     );
   }
@@ -162,10 +177,6 @@ function LiveInteractionCard({
       renderComponent={renderComponent}
     />
   );
-}
-
-function messageText(message: NormalizedMessage): string {
-  return message.text;
 }
 
 function ThinkingDots() {

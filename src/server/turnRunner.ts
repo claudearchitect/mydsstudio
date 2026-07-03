@@ -17,7 +17,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { applyPatch, type BeliefState, type BeliefEvent, type TurnStreamEvent, type TurnUsage } from "@/contracts";
 import type { AnthropicMessagesClient } from "./anthropicClient";
-import { assembleContext, type PriorTurnRecord } from "./contextAssembly";
+import { assembleContext, KICKOFF_INSTRUCTION, type PriorTurnRecord } from "./contextAssembly";
 import { buildAnthropicTools } from "./tools";
 import {
   validateTurnToolCalls,
@@ -25,10 +25,15 @@ import {
   type ValidTurnToolCalls,
 } from "./protocolValidation";
 import { mapErrorToTurnError } from "./errorMapping";
-import { nextEventId } from "./eventLog";
+import { nextEventIdForState } from "./eventLog";
 import { buildTurnLogEntry, logTurn } from "./logging";
 
-const MODEL = "claude-opus-4-8";
+// KICKOFF_INSTRUCTION lives in contextAssembly (assembly needs it to render
+// the first user message of a replayed conversation); re-exported here so the
+// route handler and CLI keep importing it from turnRunner as before.
+export { KICKOFF_INSTRUCTION };
+
+const MODEL = "claude-sonnet-5";
 const MAX_TOKENS = 16000;
 
 export interface RunTurnInput {
@@ -62,15 +67,6 @@ export interface RunTurnResult {
   /** True if the turn ended by emitting an `error` event. */
   failed: boolean;
 }
-
-/** The kickoff instruction for a brand-new session (V0_PLAN.md: "a new
- * session posts a session_start event with an empty log — the agent's first
- * turn asks the opening question ... No hardcoded first question; the model
- * owns the interview from turn one."). This is NOT a first question — it is
- * an instruction to the model to produce one, per the system prompt's
- * interview-strategy rules. */
-export const KICKOFF_INSTRUCTION =
-  "This is a brand-new session. No product, audience, or design signal has been captured yet. Begin the interview: call update_beliefs with an empty patch (there is nothing to commit yet) and call interact with mode \"ask\" to pose your opening question — what they're building and who it's for is the standard opening, but phrase it in your own words.";
 
 export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
   const { client, beliefState, latestUserText, priorTurns, turnIndex, onEvent } = input;
@@ -156,6 +152,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
     return finalizeSuccessfulTurn({
       toolCalls: retryAttempt.toolCalls,
       beliefState,
+      latestUserText,
       seed,
       onEvent,
       usage: retryAttempt.usage,
@@ -165,6 +162,7 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
   return finalizeSuccessfulTurn({
     toolCalls: attempt.toolCalls,
     beliefState,
+    latestUserText,
     seed,
     onEvent,
     usage: attempt.usage,
@@ -234,13 +232,17 @@ async function attemptTurn(params: {
 function finalizeSuccessfulTurn(params: {
   toolCalls: ValidTurnToolCalls;
   beliefState: BeliefState;
+  latestUserText: string;
   seed: string;
   usage: Anthropic.Usage;
   onEvent: (event: TurnStreamEvent) => void;
 }): RunTurnResult {
-  const { toolCalls, beliefState, seed, usage, onEvent } = params;
+  const { toolCalls, beliefState, latestUserText, seed, usage, onEvent } = params;
 
-  const eventId = nextEventId(seed);
+  // Event ids are derived from the state's existing log (not a process
+  // counter) so they stay unique across restarts and resumed sessions — see
+  // eventLog.ts.
+  const eventId = nextEventIdForState(beliefState.events, seed);
   const patchedState = applyPatch(beliefState, toolCalls.updateBeliefs.patch, eventId);
 
   const newEvents: BeliefEvent[] = [
@@ -256,7 +258,7 @@ function finalizeSuccessfulTurn(params: {
   let interactionForWire: import("@/contracts").Interaction;
   const completed = Boolean(toolCalls.exportDesignMd);
   if (toolCalls.interact) {
-    const interactEventId = nextEventId(seed);
+    const interactEventId = nextEventIdForState(newEvents, seed);
     newEvents.push({
       id: interactEventId,
       ts: new Date().toISOString(),
@@ -265,7 +267,7 @@ function finalizeSuccessfulTurn(params: {
     });
     interactionForWire = toolCalls.interact.interaction;
   } else if (toolCalls.exportDesignMd) {
-    const exportEventId = nextEventId(seed);
+    const exportEventId = nextEventIdForState(newEvents, seed);
     newEvents.push({
       id: exportEventId,
       ts: new Date().toISOString(),
@@ -309,11 +311,14 @@ function finalizeSuccessfulTurn(params: {
 
   const priorTurnRecord: PriorTurnRecord | undefined = toolCalls.interact
     ? {
-        updateBeliefsInput: toolCalls.updateBeliefs.patch,
-        interactInput: toolCalls.interact.interaction,
-        updateBeliefsToolUseId: toolCalls.updateBeliefs.toolUseId,
-        interactToolUseId: toolCalls.interact.toolUseId,
-      }
+      updateBeliefsInput: toolCalls.updateBeliefs.patch,
+      interactInput: toolCalls.interact.interaction,
+      updateBeliefsToolUseId: toolCalls.updateBeliefs.toolUseId,
+      interactToolUseId: toolCalls.interact.toolUseId,
+      // The text that prompted this turn — replayed as this turn's user
+      // message on the next request so the model sees the user's own words.
+      userText: latestUserText,
+    }
     : undefined;
 
   return { beliefState: finalState, toolCalls, priorTurnRecord, failed: false };

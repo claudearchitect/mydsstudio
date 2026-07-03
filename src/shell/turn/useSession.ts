@@ -50,7 +50,11 @@ export interface UseSessionResult {
   isStreaming: boolean;
   streamingText: string;
   error: { code: string; message: string } | null;
-  sendMessage: (message: NormalizedMessage) => Promise<void>;
+  /** `displayText` is the human-facing chat-bubble rendering of this action;
+   * omit it for plain chat (falls back to `message.text`). Picks, control
+   * tweaks, and region comments pass a friendly label so the model-facing
+   * `message.text` never leaks into the UI. */
+  sendMessage: (message: NormalizedMessage, displayText?: string) => Promise<void>;
   retry: () => void;
   agentExhausted: boolean;
   /** True once the agent has signaled confident completion (V0_PLAN.md
@@ -152,7 +156,7 @@ export function useSession({
   );
 
   const sendMessage = useCallback(
-    async (message: NormalizedMessage) => {
+    async (message: NormalizedMessage, displayText?: string) => {
       if (isStreaming) return; // one in-flight turn at a time
       setOutgoingMessages((prev) => [...prev, message]);
       setTranscript((prev) => [
@@ -161,6 +165,7 @@ export function useSession({
           kind: "userMessage",
           id: nextTranscriptId("msg"),
           message,
+          displayText: displayText ?? message.text,
           ts: new Date().toISOString(),
         },
       ]);

@@ -19,6 +19,11 @@ const PriorTurnRecordSchema = z.object({
   interactInput: InteractionSchema,
   updateBeliefsToolUseId: z.string(),
   interactToolUseId: z.string(),
+  // The already-rendered user text that prompted this turn, replayed as its
+  // user message on the next request (see contextAssembly.ts). Defaulted so a
+  // client that hasn't been updated yet still validates — an absent value
+  // just degrades that turn's replayed history, it doesn't 400.
+  userText: z.string().default(""),
 });
 
 export const TurnRequestSchema = z.object({

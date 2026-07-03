@@ -17,22 +17,31 @@ const VERBATIM_THRESHOLD = 24;
  * fold everything older into one summary line. */
 const VERBATIM_TAIL_SIZE = 16;
 
-let eventCounter = 0;
-
-/** Resets the module-local event id counter. Test-only — production event
- * ids only need to be unique within a session's lifetime, and the route
- * handler's session state is per-request in V0 (no persistence), so a
- * simple incrementing counter seeded per session is sufficient. */
-export function resetEventIdCounterForTests(): void {
-  eventCounter = 0;
+/**
+ * Generates the next event id for a session by deriving it from the events
+ * already in the belief state, NOT from any process-global counter. This is
+ * what keeps ids unique across server restarts, page reloads, and concurrent
+ * sessions: the client persists belief state in localStorage and replays it
+ * back on every request, so a global counter (which resets to zero on a fresh
+ * process) would re-issue ids that already exist in a resumed log —
+ * corrupting the provenance/rationale-evidence references that point at them.
+ * Deriving `max(existing numeric suffix) + 1` is stable under all of those.
+ *
+ * `seed` is the id prefix (default "e"); only ids matching `<seed><digits>`
+ * participate in the max, so a differently-seeded id never collides.
+ */
+export function nextEventIdForState(events: BeliefEvent[], seed = "e"): string {
+  const pattern = new RegExp(`^${escapeRegExp(seed)}(\\d+)$`);
+  let max = 0;
+  for (const e of events) {
+    const m = pattern.exec(e.id);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return `${seed}${String(max + 1).padStart(2, "0")}`;
 }
 
-/** Generates the next event id for a session. `seed` lets callers key ids
- * off a stable per-session prefix so ids stay readable in logs/fixtures
- * without needing a UUID dependency. */
-export function nextEventId(seed = "e"): string {
-  eventCounter += 1;
-  return `${seed}${String(eventCounter).padStart(2, "0")}`;
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export interface EventLogTail {

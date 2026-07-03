@@ -38,9 +38,37 @@ export interface PriorTurnRecord {
   interactInput: unknown;
   updateBeliefsToolUseId: string;
   interactToolUseId: string;
+  /** The rendered user text that prompted this turn — replayed as its user
+   * message on the next request so the model sees the user's own words. Empty
+   * for the kickoff turn (the server substitutes the kickoff instruction). */
+  userText: string;
 }
 
 const KICKOFF_INSTRUCTION_MESSAGE = null;
+
+/** Renders a NormalizedMessage to the same plain text the server produces
+ * (src/server/requestSchema.ts `renderNormalizedMessageText`). Duplicated
+ * rather than imported for the same server/client boundary reason as
+ * `PriorTurnRecord` above — src/server/ transitively reaches the API-key
+ * path. Must stay byte-identical to the server's renderer, or a turn's
+ * replayed history diverges from its live text and misses the prompt cache
+ * (correctness is unaffected either way). `messageRenderMatchesServer` in the
+ * tests pins the two together. */
+export function renderUserText(message: NormalizedMessage | null): string {
+  if (message === null) return ""; // kickoff — server substitutes KICKOFF_INSTRUCTION
+  switch (message.channel) {
+    case "chat":
+      return message.text;
+    case "region":
+      return [
+        `[region comment on ${message.target}]`,
+        `tokens in scope: ${JSON.stringify(message.tokensInScope)}`,
+        message.text,
+      ].join("\n");
+    case "control":
+      return `[control] ${message.text}`;
+  }
+}
 
 export class RealTurnAgent implements TurnAgent {
   private priorTurns: PriorTurnRecord[] = [];
@@ -100,13 +128,22 @@ export class RealTurnAgent implements TurnAgent {
         // issued) — see contextAssembly.ts's replay, which builds fresh
         // assistant/user message pairs from these fields on every turn
         // regardless of what id scheme produced them.
+        const completedTurnIndex = this.turnIndex;
         this.turnIndex += 1;
-        this.priorTurns.push({
-          updateBeliefsInput: event.patch,
-          interactInput: event.interaction,
-          updateBeliefsToolUseId: `turn-${this.turnIndex}-update_beliefs`,
-          interactToolUseId: `turn-${this.turnIndex}-interact`,
-        });
+        // Don't record an export turn: the server returns no replayable
+        // interact for it (it called export_design_md, not interact), so
+        // fabricating a record here would replay a question the model never
+        // asked. Matches turnRunner.ts, which returns no priorTurnRecord for
+        // an export turn.
+        if (!event.completed) {
+          this.priorTurns.push({
+            updateBeliefsInput: event.patch,
+            interactInput: event.interaction,
+            updateBeliefsToolUseId: `turn-${completedTurnIndex}-update_beliefs`,
+            interactToolUseId: `turn-${completedTurnIndex}-interact`,
+            userText: renderUserText(message),
+          });
+        }
         return {
           kind: "success",
           beliefState: event.beliefState,

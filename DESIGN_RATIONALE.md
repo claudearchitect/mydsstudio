@@ -55,7 +55,7 @@ Novelty: The visual interview approach that both provides suggestions in a visua
 - **Lead fast-follow:** Feature - a "vary again / go bolder" control to regenerate proposal variants along an axis — turning _pick-from-a-batch_ into _drive-the-exploration_.
 - **Tune the API calls.** The server is stateless, so the loop resends the full history every turn. Caching breakpoints are already in place to keep that cheap, but I want to confirm cache hits actually hold up in prod as sessions get long — and eventually summarize old turns into the belief state instead of resending everything forever.
 - **Improve the schema.** Extend the schema so it covers more of the design-token spec.
-- **Improve the agent.** Currently the agent asks a lot of questions, sometimes being a bit too careful when scoring / building its confidence. I'd add different interview strategies: let it take leaps of faith and confirm ("here's what I think you want — is this right?") instead of always asking, so it can make bigger jumps in its understanding.
+- **Improve the agent / architecture.** Currently the agent asks a lot of questions, sometimes being a bit too careful when scoring / building its confidence. I'd add different interview strategies: let it take leaps of faith and confirm ("here's what I think you want — is this right?") instead of always asking, so it can make bigger jumps in its understanding.
 
 ---
 
@@ -78,3 +78,4 @@ Claude code with Fable for planning. Opus for orchestration. Sonnet for subagent
 - [V0 build orchestrator](transcripts/orchestrator/index.html) — the main session that ran Phase 0 → parallel workstreams → Phase 2 integration.
 - [Planning agent](transcripts/planning-agent/index.html) — concept → implementation architecture → V0 plan restructured for parallel agents.
 - [Polish agent](transcripts/polish-agent/index.html) — the "make it actually visual" feedback-driven polish loops.
+- [Auditor](transcripts/auditor/index.html) — audit of API-spec bugs and visual inconsistencies, with a phased fix plan.

@@ -25,7 +25,7 @@ export interface ChatPanelProps {
   beliefState: BeliefState;
   isStreaming: boolean;
   streamingText: string;
-  onSendMessage: (message: NormalizedMessage) => void;
+  onSendMessage: (message: NormalizedMessage, displayText?: string) => void;
   onRetry: () => void;
   renderComponent?: RenderComponent;
 }
@@ -50,10 +50,12 @@ export function ChatPanel({
 
   function handleProposalPick(variant: ProposalVariant, interaction: Interaction) {
     if (interaction.mode !== "propose") return;
+    // Model-facing text stays explicit; the chat bubble shows a friendly label.
     onSendMessage(
       normalizeChatMessage(
         `user picked "${variant.caption}" for the ${interaction.axis.join(", ")} proposal on ${interaction.target}`,
       ),
+      `Picked: ${variant.caption}`,
     );
   }
 
@@ -63,6 +65,7 @@ export function ChatPanel({
       normalizeChatMessage(
         `none of these feel right for ${interaction.axis.join(", ")} — user wants different options`,
       ),
+      "None of these — show me different options",
     );
   }
 

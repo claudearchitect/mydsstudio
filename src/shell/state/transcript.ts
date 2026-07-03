@@ -11,6 +11,12 @@ export interface UserMessageEntry {
   kind: "userMessage";
   id: string;
   message: NormalizedMessage;
+  /** Friendly text to show in the user's chat bubble. The `message.text` a
+   * pick/control/region emits is written for the *model* (e.g. `user picked
+   * "Bold teal" for the color.primary proposal on button.primary`); this is
+   * the human-facing rendering of the same action (e.g. `Picked: Bold teal`).
+   * Defaults to `message.text` for plain chat, where the two are the same. */
+  displayText: string;
   ts: string;
 }
 

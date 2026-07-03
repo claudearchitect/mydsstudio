@@ -6,9 +6,10 @@
  * AGENTS.md's "no test may call the live Claude API".
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { EMPTY_TOKEN_PATCH, formatSseEvent, type TurnStreamEvent } from "@/contracts";
+import { EMPTY_TOKEN_PATCH, formatSseEvent, type NormalizedMessage, type TurnStreamEvent } from "@/contracts";
 import { emptyBeliefState, confidence01 } from "@fixtures/beliefStates";
-import { RealTurnAgent } from "../turn/realTurnAgent";
+import { RealTurnAgent, renderUserText } from "../turn/realTurnAgent";
+import { renderNormalizedMessageText } from "@/server/requestSchema";
 
 function sseResponse(events: TurnStreamEvent[]): Response {
   const body = events.map(formatSseEvent).join("");
@@ -128,6 +129,84 @@ describe("RealTurnAgent", () => {
     if (result.kind === "error") {
       expect(result.code).toBe("network_error");
     }
+  });
+
+  // The client renders each prior turn's user text to store in its
+  // PriorTurnRecord (so the server can replay it as that turn's user message).
+  // It must render byte-identically to the server's own renderer, or a turn's
+  // replayed history diverges from its live text and misses the prompt cache.
+  it("messageRenderMatchesServer: renderUserText matches the server's renderNormalizedMessageText on every channel", () => {
+    const messages: NormalizedMessage[] = [
+      { channel: "chat", text: "a plain answer" },
+      {
+        channel: "region",
+        target: "button.primary",
+        text: "make this rounder",
+        tokensInScope: ["shape.radius", "color.primary"],
+      },
+      { channel: "control", text: "radius set to 12px" },
+    ];
+    for (const message of messages) {
+      expect(renderUserText(message)).toBe(renderNormalizedMessageText(message));
+    }
+    // Kickoff (null) renders empty so the server substitutes the kickoff text.
+    expect(renderUserText(null)).toBe("");
+  });
+
+  it("carries the rendered userText forward in each prior-turn record", async () => {
+    const turnEvent: TurnStreamEvent = {
+      type: "turn",
+      beliefState: confidence01,
+      interaction: { mode: "ask", question: "q?", quickReplies: [] },
+      usage: { inputTokens: 1, outputTokens: 1, cacheReadInputTokens: 5, cacheCreationInputTokens: 0 },
+      patch: EMPTY_TOKEN_PATCH,
+      completed: false,
+    };
+    // Fresh Response per call — a ReadableStream body can only be read once.
+    const fetchMock = vi.fn().mockImplementation(() => sseResponse([turnEvent]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const agent = new RealTurnAgent();
+    await agent.runTurn(null, emptyBeliefState); // kickoff → userText ""
+    await agent.runTurn({ channel: "chat", text: "second" }, confidence01);
+    await agent.runTurn({ channel: "chat", text: "third" }, confidence01);
+
+    const thirdBody = JSON.parse(fetchMock.mock.calls[2][1].body as string);
+    expect(thirdBody.priorTurns).toHaveLength(2);
+    expect(thirdBody.priorTurns[0].userText).toBe(""); // kickoff
+    expect(thirdBody.priorTurns[1].userText).toBe("second");
+  });
+
+  it("does not record an export turn (avoids replaying a fabricated question)", async () => {
+    const askEvent: TurnStreamEvent = {
+      type: "turn",
+      beliefState: confidence01,
+      interaction: { mode: "ask", question: "q?", quickReplies: [] },
+      usage: { inputTokens: 1, outputTokens: 1, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 },
+      patch: EMPTY_TOKEN_PATCH,
+      completed: false,
+    };
+    const exportEvent: TurnStreamEvent = {
+      ...askEvent,
+      interaction: { mode: "ask", question: "Your design.md is ready.", quickReplies: [] },
+      completed: true,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(sseResponse([askEvent]))
+      .mockResolvedValueOnce(sseResponse([exportEvent]))
+      .mockResolvedValueOnce(sseResponse([askEvent]));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const agent = new RealTurnAgent();
+    await agent.runTurn(null, emptyBeliefState); // turn 1 (ask) → recorded
+    await agent.runTurn({ channel: "chat", text: "export please" }, confidence01); // turn 2 (export) → NOT recorded
+    await agent.runTurn({ channel: "chat", text: "actually keep going" }, confidence01); // turn 3
+
+    const thirdBody = JSON.parse(fetchMock.mock.calls[2][1].body as string);
+    // Only the ask turn is in priorTurns; the export turn is omitted.
+    expect(thirdBody.priorTurns).toHaveLength(1);
+    expect(thirdBody.priorTurns[0].userText).toBe("");
   });
 
   it("sends null for message on the kickoff turn", async () => {

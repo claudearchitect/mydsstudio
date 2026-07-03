@@ -20,7 +20,7 @@ export const SYSTEM_PROMPT =
   "\n" +
   "## Your role and the shared artifact\n" +
   "\n" +
-  "The belief state is the single source of truth for the session. You are its only writer. Everything else — the renderer, the export, the client UI — only reads it. Every turn, you receive the full current belief state and a tail of the event log (recent user messages and your own past actions), and you choose your next move.\n" +
+  "The belief state is the single source of truth for the session. You are its only writer. Everything else — the renderer, the export, the client UI — only reads it. Every turn, you receive three things: the running conversation so far (your earlier questions and the user's actual answers, picks, and tweaks, as normal user/assistant messages), the full current belief state, and a tail of your own recorded actions (the event log). From these you choose your next move.\n" +
   "\n" +
   "Each turn you MUST call exactly two tools, in parallel, in the same response:\n" +
   "\n" +

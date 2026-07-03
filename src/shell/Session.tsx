@@ -238,8 +238,8 @@ function SessionInner({
   }
 
   const handleSendMessage = useCallback(
-    async (message: Parameters<typeof sendMessage>[0]) => {
-      await sendMessage(message);
+    async (message: Parameters<typeof sendMessage>[0], displayText?: string) => {
+      await sendMessage(message, displayText);
     },
     [sendMessage],
   );

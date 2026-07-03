@@ -19,7 +19,7 @@ A conversational design-system studio: a user describes their product in plain l
 
 ## Stack
 
-Next.js (App Router, TypeScript) · Tailwind v4 (studio shell only) · raw CSS custom properties (preview only) · Zod v4 (single source of validation) · `@anthropic-ai/sdk` with model `claude-opus-4-8` · Vitest (jsdom).
+Next.js (App Router, TypeScript) · Tailwind v4 (studio shell only) · raw CSS custom properties (preview only) · Zod v4 (single source of validation) · `@anthropic-ai/sdk` with model `claude-sonnet-5` · Vitest (jsdom).
 
 ## Non-negotiable invariants
 
@@ -31,10 +31,10 @@ These are enforced across the codebase — violating one is a bug, not a style c
 - **Two token namespaces, never mixed.** Shell chrome uses `--app-*` (fixed, in `globals.css`). Belief-state preview uses `--ds-*` (dynamic, from `resolveTokens`). Nothing in the preview subtree reads `--app-*`; nothing in the shell reads `--ds-*`. Don't reference one family from the other's subtree.
 - **`tool_use.input` is already parsed.** Read it as the SDK's object — never string-match serialized JSON.
 
-## Claude API rules (model `claude-opus-4-8`)
+## Claude API rules (model `claude-sonnet-5`)
 
 - Use adaptive thinking: `thinking: {type: "adaptive"}` and `output_config: {effort: "high"}`.
-- **Do NOT send `temperature`, `top_p`, `top_k`, or `budget_tokens`** — they return HTTP 400 on this model.
+- **Do NOT send `temperature`, `top_p`, `top_k`, or `budget_tokens`** — non-default sampling params and `budget_tokens` return HTTP 400 on this model.
 - Tool schemas: `strict: true`, `additionalProperties: false`, and `required` listing every field. Malformed tool input must be impossible because the patch is machine-applied.
 - Prompt caching: the system prompt must be **byte-identical every turn** (zero interpolated values) with `cache_control: {type: "ephemeral"}` on the last system block; second breakpoint on the last content block of the newest message. Serialize tools deterministically. Verify with `usage.cache_read_input_tokens` (should be > 0 from turn 2).
 - `max_tokens: 16000`. Stream with `client.messages.stream()`; parse tool calls from `finalMessage()`.

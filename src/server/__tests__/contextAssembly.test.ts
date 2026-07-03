@@ -57,7 +57,7 @@ describe("assembleContext", () => {
     expect(system[0].text).not.toMatch(/2026-07-03/);
   });
 
-  it("puts the belief state and event tail in the newest user message with a cache_control breakpoint on its last block", () => {
+  it("puts the user's answer and the volatile belief block in the newest user message, with the cache breakpoint on the answer block (not the belief block)", () => {
     const ctx = assembleContext({
       beliefState: confidence04,
       latestUserText: "the user's latest message",
@@ -66,45 +66,58 @@ describe("assembleContext", () => {
     const last = ctx.messages[ctx.messages.length - 1];
     expect(last.role).toBe("user");
     const content = last.content as Array<{ type: string; text: string; cache_control?: unknown }>;
-    const lastBlock = content[content.length - 1];
-    expect(lastBlock.cache_control).toEqual({ type: "ephemeral" });
-    expect(lastBlock.text).toContain("the user's latest message");
-    expect(lastBlock.text).toContain(JSON.stringify(confidence04.meta.product));
+
+    // The user's answer is its own block, carrying the second cache
+    // breakpoint (so the append-only conversation prefix caches).
+    const answerBlock = content.find((b) => b.text === "the user's latest message");
+    expect(answerBlock?.cache_control).toEqual({ type: "ephemeral" });
+
+    // The belief state trails as the LAST block, uncached (it never recurs),
+    // and no longer carries the user's message text.
+    const beliefBlock = content[content.length - 1];
+    expect(beliefBlock.cache_control).toBeUndefined();
+    expect(beliefBlock.text).toContain(JSON.stringify(confidence04.meta.product));
+    expect(beliefBlock.text).not.toContain("the user's latest message");
   });
 
-  it("replays prior turns as assistant tool_use + user tool_result message pairs, folded into the new turn's user message", () => {
+  it("replays the kickoff as the first user message and folds acks + the newest answer into the last", () => {
     const ctx = assembleContext({
       beliefState: emptyBeliefState,
       latestUserText: "next turn",
       priorTurns: [
         {
+          // priorTurns[0] is always the kickoff turn; empty userText tells
+          // assembly to substitute the kickoff instruction.
           updateBeliefsInput: { meta: {}, tokens: [], confidence: [], rationale: [] },
           interactInput: { mode: "ask", question: "q1?", quickReplies: [] },
           updateBeliefsToolUseId: "tu_1",
           interactToolUseId: "tu_2",
+          userText: "",
         },
       ],
     });
 
-    // 1 assistant (tool_use pair) + 1 user (tool_result ack + new turn text,
-    // folded into a single message so roles strictly alternate — the
-    // Anthropic API 400s on two adjacent "user" messages) = 2
-    expect(ctx.messages).toHaveLength(2);
-    expect(ctx.messages[0].role).toBe("assistant");
-    const assistantContent = ctx.messages[0].content as Array<{ type: string; id: string; name: string }>;
+    // user(kickoff) + assistant(tool_use pair) + user(acks + newest answer + belief) = 3
+    expect(ctx.messages).toHaveLength(3);
+    expect(ctx.messages.map((m) => m.role)).toEqual(["user", "assistant", "user"]);
+
+    // First message replays the kickoff instruction (not a real user answer).
+    const kickoffContent = ctx.messages[0].content as Array<{ type: string; text: string }>;
+    expect(kickoffContent).toHaveLength(1);
+    expect(kickoffContent[0].text).toContain("brand-new session");
+
+    const assistantContent = ctx.messages[1].content as Array<{ type: string; id: string; name: string }>;
     expect(assistantContent.map((b) => b.name)).toEqual(["update_beliefs", "interact"]);
     expect(assistantContent.map((b) => b.id)).toEqual(["tu_1", "tu_2"]);
 
-    expect(ctx.messages[1].role).toBe("user");
-    const userContent = ctx.messages[1].content as Array<{ type: string; tool_use_id?: string; text?: string }>;
+    const userContent = ctx.messages[2].content as Array<{ type: string; tool_use_id?: string; text?: string }>;
     const resultBlocks = userContent.filter((b) => b.type === "tool_result");
     expect(resultBlocks.map((b) => b.tool_use_id)).toEqual(["tu_1", "tu_2"]);
     const textBlocks = userContent.filter((b) => b.type === "text");
-    expect(textBlocks).toHaveLength(1);
-    expect(textBlocks[0].text).toContain("next turn");
+    expect(textBlocks.some((b) => b.text === "next turn")).toBe(true);
   });
 
-  it("roles strictly alternate across multiple prior turns (no two adjacent same-role messages)", () => {
+  it("replays each prior turn's user answer as its own historical message; roles strictly alternate", () => {
     const ctx = assembleContext({
       beliefState: emptyBeliefState,
       latestUserText: "turn three text",
@@ -114,30 +127,86 @@ describe("assembleContext", () => {
           interactInput: { mode: "ask", question: "q1?", quickReplies: [] },
           updateBeliefsToolUseId: "tu_1",
           interactToolUseId: "tu_2",
+          userText: "",
         },
         {
           updateBeliefsInput: { meta: {}, tokens: [], confidence: [], rationale: [] },
           interactInput: { mode: "ask", question: "q2?", quickReplies: [] },
           updateBeliefsToolUseId: "tu_3",
           interactToolUseId: "tu_4",
+          userText: "the user answered turn two",
         },
       ],
     });
 
-    // assistant, user(ack1), assistant, user(ack2 + new turn text) = 4
-    expect(ctx.messages).toHaveLength(4);
+    // user(kickoff), assistant(t1), user(ack1 + turn2 answer), assistant(t2), user(ack2 + newest) = 5
+    expect(ctx.messages).toHaveLength(5);
     const roles = ctx.messages.map((m) => m.role);
-    expect(roles).toEqual(["assistant", "user", "assistant", "user"]);
+    expect(roles).toEqual(["user", "assistant", "user", "assistant", "user"]);
     for (let i = 1; i < roles.length; i++) {
       expect(roles[i]).not.toBe(roles[i - 1]);
     }
 
-    const lastContent = ctx.messages[3].content as Array<{ type: string; tool_use_id?: string; text?: string }>;
+    // The second turn's real answer is replayed as a historical user message
+    // (this is the fix that lets the model see the user's own earlier words).
+    const midContent = ctx.messages[2].content as Array<{ type: string; text?: string }>;
+    expect(midContent.some((b) => b.text === "the user answered turn two")).toBe(true);
+
+    const lastContent = ctx.messages[4].content as Array<{ type: string; tool_use_id?: string; text?: string }>;
     const resultBlocks = lastContent.filter((b) => b.type === "tool_result");
     expect(resultBlocks.map((b) => b.tool_use_id)).toEqual(["tu_3", "tu_4"]);
-    const textBlocks = lastContent.filter((b) => b.type === "text");
-    expect(textBlocks).toHaveLength(1);
-    expect(textBlocks[0].text).toContain("turn three text");
+    expect(lastContent.some((b) => b.text === "turn three text")).toBe(true);
+  });
+
+  it("keeps the historical replay of a turn byte-identical to how it was sent when newest (append-only cache prefix)", () => {
+    const priorKickoff = {
+      updateBeliefsInput: { meta: {}, tokens: [], confidence: [], rationale: [] } as const,
+      interactInput: { mode: "ask" as const, question: "q1?", quickReplies: [] },
+      updateBeliefsToolUseId: "tu_1",
+      interactToolUseId: "tu_2",
+      userText: "",
+    };
+
+    // Turn 2: the user's answer is the newest message.
+    const turn2 = assembleContext({
+      beliefState: emptyBeliefState,
+      latestUserText: "my answer to q1",
+      priorTurns: [priorKickoff],
+    });
+    // The newest user message drops its trailing belief block + cache_control
+    // when replayed as history on turn 3.
+    const turn2NewestUser = turn2.messages[2].content as Array<{
+      type: string;
+      text?: string;
+      tool_use_id?: string;
+      cache_control?: unknown;
+    }>;
+
+    // Turn 3: turn 2 is now historical.
+    const turn3 = assembleContext({
+      beliefState: emptyBeliefState,
+      latestUserText: "my answer to q2",
+      priorTurns: [
+        priorKickoff,
+        { ...priorKickoff, updateBeliefsToolUseId: "tu_3", interactToolUseId: "tu_4", userText: "my answer to q1" },
+      ],
+    });
+    const turn3HistoricalUser = turn3.messages[2].content as Array<{
+      type: string;
+      text?: string;
+      tool_use_id?: string;
+      cache_control?: unknown;
+    }>;
+
+    // The historical message = the live message minus the trailing belief
+    // block (and minus cache_control metadata), so the tokenized prefix bytes
+    // are identical and the cache from turn 2 is readable on turn 3.
+    const strip = (blocks: typeof turn2NewestUser) =>
+      blocks
+        .filter((b) => !(b.type === "text" && b.text?.startsWith("## Current belief state")))
+        .map((b) => ({ type: b.type, text: b.text, tool_use_id: b.tool_use_id }));
+
+    expect(strip(turn3HistoricalUser)).toEqual(strip(turn2NewestUser));
   });
 
   it("summarizes the event log tail when the log exceeds the verbatim threshold", () => {

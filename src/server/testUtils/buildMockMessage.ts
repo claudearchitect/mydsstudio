@@ -15,7 +15,7 @@ export function buildMockMessage(params: {
     id: "msg_test_fixture",
     container: null,
     content: params.content,
-    model: "claude-opus-4-8",
+    model: "claude-sonnet-5",
     role: "assistant",
     stop_reason: params.stopReason ?? "tool_use",
     stop_details: null,
