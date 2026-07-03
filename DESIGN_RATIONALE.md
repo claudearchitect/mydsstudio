@@ -58,7 +58,7 @@ Rough narrative of the build arc — keep it honest.
 
 ## 6. Logistics
 
-Time spent:
+**Time spent:**
 
 - [50 minutes] Planning. Iterated with agent on concept, then overall implementation plan, then v0 plan, restructuring it for subagents.
 - [1 hr] Initial execution with /goal of V0 implementation plan . Phase 0 was serial, Phase 1 was parallelized across 4 subagents (renderer and preview, interaction shell, loop server, design.md export).
@@ -66,10 +66,11 @@ Time spent:
 - [30-40 minutes] Polish working alongside the orchestrator / Phase 2 subagent with feedback from what I'm seeing, expanding scope slighly in places, and giving clearer direction / feedback in others.
 - [20 minutes] Write up, recording, logistics, etc.
 
-- **Tools / model:**
-  Claude code with Fable for planning. Opus for orchestration. Sonnet for subagents.
+**Tools / model:**
+Claude code with Fable for planning. Opus for orchestration. Sonnet for subagents.
 
-- **Transcripts:** HTML transcripts of today's key Claude Code sessions live in [`transcripts/`](transcripts/):
-  - [V0 build orchestrator](transcripts/orchestrator/index.html) — the main session that ran Phase 0 → parallel workstreams → Phase 2 integration.
-  - [Planning agent](transcripts/planning-agent/index.html) — concept → implementation architecture → V0 plan restructured for parallel agents.
-  - [Polish agent](transcripts/polish-agent/index.html) — the "make it actually visual" feedback-driven polish loops.
+**Transcripts:** HTML transcripts of today's key Claude Code sessions live in [`transcripts/`](transcripts/):
+
+- [V0 build orchestrator](transcripts/orchestrator/index.html) — the main session that ran Phase 0 → parallel workstreams → Phase 2 integration.
+- [Planning agent](transcripts/planning-agent/index.html) — concept → implementation architecture → V0 plan restructured for parallel agents.
+- [Polish agent](transcripts/polish-agent/index.html) — the "make it actually visual" feedback-driven polish loops.
