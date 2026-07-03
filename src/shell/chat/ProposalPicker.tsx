@@ -18,15 +18,49 @@
  */
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import {
   applyPatch,
+  getManifestEntry,
+  parseTokenRef,
+  resolveTokens,
   renderComponentPlaceholder,
   type BeliefState,
   type ProposeInteraction,
   type ProposalVariant,
   type RenderComponent,
+  type TokenGroupName,
 } from "@/contracts";
+
+/** Confidence forced onto a proposal target's dependency groups for the
+ * picker's display render only (never written to real state). */
+const SHARP_DISPLAY_CONFIDENCE = 0.95;
+
+/**
+ * Display-only transform: raise the target component's dependency groups to
+ * full confidence so the real component renders SHARP in the picker,
+ * regardless of ambient session confidence. A proposal is a *focused
+ * comparison* of the probed axis — reveal-state uncertainty belongs to the
+ * ambient preview, not here. Without this, a color proposal made before
+ * shape/typography/spacing are decided renders the button "absent" (a
+ * colorless placeholder), hiding the very axis being compared. Unset tokens
+ * fall back to the components' neutral defaults; the variant's own patch
+ * supplies the probed value. Not written to state.events or persisted.
+ */
+function sharpenForTarget(s: BeliefState, target: string): BeliefState {
+  const entry = getManifestEntry(target);
+  if (!entry) return s;
+  const groups = { ...s.groups };
+  for (const ref of entry.tokenGroups) {
+    const group = parseTokenRef(ref).group as TokenGroupName;
+    const existing = groups[group];
+    groups[group] = {
+      confidence: Math.max(existing?.confidence ?? 0, SHARP_DISPLAY_CONFIDENCE),
+      tokens: existing?.tokens ?? {},
+    };
+  }
+  return { ...s, groups };
+}
 
 export interface ProposalPickerProps {
   state: BeliefState;
@@ -53,7 +87,10 @@ export function ProposalPicker({
     () =>
       interaction.variants.map((variant) => ({
         variant,
-        previewState: applyPatch(state, variant.patch, `preview-${variant.id}`),
+        previewState: sharpenForTarget(
+          applyPatch(state, variant.patch, `preview-${variant.id}`),
+          interaction.target,
+        ),
       })),
     [state, interaction.variants],
   );
@@ -76,7 +113,10 @@ export function ProposalPicker({
             className="flex flex-col items-center gap-2 rounded-app-md bg-app-paper p-3 text-left shadow-app-edge transition-shadow hover:shadow-app-focus disabled:opacity-40"
             data-testid={`proposal-variant-${variant.id}`}
           >
-            <div className="ds-preview-root flex w-full items-center justify-center rounded-app-sm p-2">
+            <div
+              className="ds-preview-root flex w-full items-center justify-center rounded-app-sm p-2"
+              style={resolveTokens(previewState) as CSSProperties}
+            >
               {renderComponent(previewState, interaction.target)}
             </div>
             <span className="text-xs font-medium" style={{ color: "#2b2a26" }}>

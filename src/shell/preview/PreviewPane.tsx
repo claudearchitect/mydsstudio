@@ -21,8 +21,8 @@
  */
 "use client";
 
-import { useState } from "react";
-import { COMPONENT_MANIFEST, type BeliefState, type RenderComponent } from "@/contracts";
+import { useState, type CSSProperties } from "react";
+import { COMPONENT_MANIFEST, resolveTokens, type BeliefState, type RenderComponent } from "@/contracts";
 import { renderComponent as realRenderComponent } from "@/preview/renderComponent";
 import { lookupTokenValue } from "../controls/tokenLookup";
 import { withPendingPreview, type PendingPreviewEntry } from "../controls/pendingPreview";
@@ -109,6 +109,7 @@ export function PreviewPane({
         <div
           className="ds-preview-root h-full w-full rounded-app-lg p-6 shadow-app-paper"
           data-testid="ds-preview-root"
+          style={resolveTokens(displayState) as CSSProperties}
         >
           <RegionSelectOverlay
             resolve={resolve}
