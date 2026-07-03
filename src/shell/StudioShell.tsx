@@ -46,13 +46,13 @@ function ChatColumnPlaceholder() {
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-        <div className="max-w-[85%] rounded-app-md border border-app-border bg-app-bg-raised px-3 py-2 text-sm text-app-text">
+        <div className="max-w-[85%] rounded-app-md bg-app-bg-raised px-3 py-2 text-sm text-app-text shadow-app-card">
           What are you building, and who&apos;s it for?
         </div>
       </div>
 
       <div className="border-t border-app-border p-3">
-        <div className="flex items-center gap-2 rounded-app-md border border-app-border bg-app-bg-input px-3 py-2">
+        <div className="flex items-center gap-2 rounded-app-lg bg-app-bg-input px-3 py-2 shadow-app-input">
           <span className="text-sm text-app-text-muted">
             Message input — Workstream B
           </span>
@@ -73,7 +73,7 @@ function PreviewPanePlaceholder() {
         <button
           type="button"
           disabled
-          className="rounded-app-pill bg-app-accent px-4 py-1.5 text-sm font-medium text-app-text opacity-60"
+          className="rounded-app-pill bg-app-accent px-4 py-1.5 text-sm font-medium text-white opacity-60"
         >
           Export
         </button>
@@ -86,7 +86,7 @@ function PreviewPanePlaceholder() {
          * used elsewhere on this page. The placeholder text below uses
          * inline styles, not Tailwind/`--app-*` utilities, to keep that
          * boundary honest even as a placeholder. */}
-        <div className="ds-preview-root flex h-full w-full items-center justify-center rounded-app-lg border border-app-border">
+        <div className="ds-preview-root flex h-full w-full items-center justify-center rounded-app-lg shadow-app-paper">
           <p style={{ fontSize: 13, color: "#8a887d" }}>
             preview panel — Workstream A renders here
           </p>

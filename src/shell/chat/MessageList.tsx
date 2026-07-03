@@ -52,7 +52,7 @@ export function MessageList({
 
       {isStreaming && (
         <div
-          className="flex max-w-[85%] items-center gap-2 rounded-app-md border border-app-border bg-app-bg-raised px-3 py-2 text-sm text-app-text-secondary"
+          className="flex max-w-[85%] items-center gap-2 rounded-app-md bg-app-bg-raised px-3 py-2 text-sm text-app-text-secondary shadow-app-card"
           data-testid="streaming-indicator"
         >
           <ThinkingDots />
@@ -85,7 +85,7 @@ function TranscriptRow({
   if (entry.kind === "userMessage") {
     return (
       <div
-        className="ml-auto max-w-[85%] rounded-app-md bg-app-accent px-3 py-2 text-sm text-white"
+        className="ml-auto max-w-[85%] rounded-app-md bg-app-accent px-3 py-2 text-sm text-white shadow-app-card"
         data-testid="transcript-user-message"
       >
         {messageText(entry.message)}
@@ -96,7 +96,7 @@ function TranscriptRow({
   if (entry.kind === "agentInteraction") {
     return (
       <div
-        className="max-w-[85%] rounded-app-md border border-app-border bg-app-bg-raised px-3 py-2 text-sm text-app-text"
+        className="max-w-[85%] rounded-app-md bg-app-bg-raised px-3 py-2 text-sm text-app-text shadow-app-card"
         data-testid="transcript-agent-interaction"
       >
         {entry.interaction.mode === "ask" ? entry.interaction.question : entry.interaction.caption}
@@ -107,7 +107,7 @@ function TranscriptRow({
   // agentError
   return (
     <div
-      className="flex max-w-[85%] flex-col gap-2 rounded-app-md border border-app-negative bg-app-bg-raised px-3 py-2 text-sm"
+      className="flex max-w-[85%] flex-col gap-2 rounded-app-md bg-app-bg-raised px-3 py-2 text-sm shadow-[0_0_0_1px_var(--app-negative),0_2px_8px_rgba(0,0,0,0.24)]"
       data-testid="transcript-error-banner"
     >
       <span className="text-app-negative">
@@ -116,7 +116,7 @@ function TranscriptRow({
       <button
         type="button"
         onClick={onRetry}
-        className="self-start rounded-app-pill border border-app-negative px-3 py-1 text-xs text-app-negative hover:bg-app-negative hover:text-white"
+        className="self-start rounded-app-pill px-3 py-1 text-xs text-app-negative shadow-[0_0_0_1px_var(--app-negative)] transition hover:bg-app-negative hover:text-white"
         data-testid="retry-button"
       >
         Retry
@@ -145,7 +145,7 @@ function LiveInteractionCard({
   if (interaction.mode === "ask") {
     return (
       <div className="flex flex-col gap-2" data-testid="live-interaction-ask">
-        <div className="max-w-[85%] rounded-app-md border border-app-border bg-app-bg-raised px-3 py-2 text-sm text-app-text">
+        <div className="max-w-[85%] rounded-app-md bg-app-bg-raised px-3 py-2 text-sm text-app-text shadow-app-card">
           {interaction.question}
         </div>
         <QuickReplies

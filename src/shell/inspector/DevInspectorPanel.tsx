@@ -42,7 +42,7 @@ export function DevInspectorPanel({ messages }: DevInspectorPanelProps) {
             {messages.map((message, i) => (
               <li
                 key={i}
-                className="rounded-app-sm border border-app-border bg-app-bg-input px-2 py-1 font-mono text-[11px] text-app-text-secondary"
+                className="rounded-app-sm bg-app-bg-input px-2 py-1 font-mono text-[11px] text-app-text-secondary shadow-app-edge"
                 data-testid={`dev-inspector-message-${i}`}
                 data-channel={message.channel}
               >

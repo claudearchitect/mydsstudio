@@ -19,7 +19,10 @@
   --app-text-secondary: #b8b5a9;
   --app-text-muted: #8a887d;
 
-  --app-border: #3d3c38;
+  /* Hairlines are translucent white (Claude desktop style) so they read as
+   * a soft edge over any of the bg tiers rather than a drawn line. */
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-border-strong: rgba(255, 255, 255, 0.16);
 
   --app-accent: #d97757;
   --app-accent-hover: #c96442;
@@ -27,10 +30,31 @@
   --app-positive: #77a75f;
   --app-negative: #d2604f;
 
-  --app-radius-sm: 6px;
-  --app-radius-md: 10px;
-  --app-radius-lg: 14px;
+  --app-radius-sm: 8px;
+  --app-radius-md: 12px;
+  --app-radius-lg: 16px;
   --app-radius-pill: 9999px;
+
+  /* Edges via box-shadow, not border: a 1px ring (spread) plus soft ambient
+   * drop. Rings don't consume layout space and can layer with elevation in
+   * one property, which is how the Claude desktop chrome does card edges. */
+  --app-shadow-edge: 0 0 0 1px var(--app-border);
+  --app-shadow-card:
+    0 0 0 1px var(--app-border),
+    0 2px 8px rgba(0, 0, 0, 0.24);
+  --app-shadow-input:
+    0 0 0 1px var(--app-border-strong),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+  --app-shadow-focus:
+    0 0 0 1px var(--app-accent),
+    0 2px 8px rgba(0, 0, 0, 0.24);
+  --app-shadow-paper:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 4px 16px rgba(0, 0, 0, 0.3),
+    0 12px 40px rgba(0, 0, 0, 0.22);
+  --app-shadow-overlay:
+    0 0 0 1px var(--app-border),
+    0 16px 48px rgba(0, 0, 0, 0.5);
 
   /* Preview artifact frame — "light artifact" surface (rule 2: dark chrome,
    * light artifact). Not part of the `--ds-*` namespace; this is the paper
@@ -49,6 +73,7 @@
   --color-app-text-muted: var(--app-text-muted);
 
   --color-app-border: var(--app-border);
+  --color-app-border-strong: var(--app-border-strong);
 
   --color-app-accent: var(--app-accent);
   --color-app-accent-hover: var(--app-accent-hover);
@@ -62,6 +87,13 @@
   --radius-app-md: var(--app-radius-md);
   --radius-app-lg: var(--app-radius-lg);
   --radius-app-pill: var(--app-radius-pill);
+
+  --shadow-app-edge: var(--app-shadow-edge);
+  --shadow-app-card: var(--app-shadow-card);
+  --shadow-app-input: var(--app-shadow-input);
+  --shadow-app-focus: var(--app-shadow-focus);
+  --shadow-app-paper: var(--app-shadow-paper);
+  --shadow-app-overlay: var(--app-shadow-overlay);
 
   --font-sans: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
 }

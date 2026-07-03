@@ -24,7 +24,7 @@ export interface ModeToggleProps {
 export function ModeToggle({ mode, liveAvailable, resolved, disabled, onChange }: ModeToggleProps) {
   return (
     <div
-      className="flex items-center gap-1 rounded-app-pill border border-app-border bg-app-bg-input p-0.5"
+      className="flex items-center gap-1 rounded-app-pill bg-app-bg-input p-0.5 shadow-app-edge"
       data-testid="mode-toggle"
       data-mode={mode}
       title={

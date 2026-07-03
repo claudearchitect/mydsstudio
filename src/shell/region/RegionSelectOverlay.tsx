@@ -169,7 +169,7 @@ function RationaleTooltip({
   if (claims.length === 0) return null;
   return (
     <div
-      className="pointer-events-none absolute z-20 max-w-xs rounded-app-sm border border-app-border bg-app-bg-raised px-2.5 py-2 text-xs text-app-text shadow-lg"
+      className="pointer-events-none absolute z-20 max-w-xs rounded-app-sm bg-app-bg-raised px-2.5 py-2 text-xs text-app-text shadow-app-overlay"
       style={{ left: rect.left, top: Math.max(0, rect.top - 8 - claims.length * 18 - 8) }}
       data-testid="rationale-tooltip"
       data-rationale-target={componentId}

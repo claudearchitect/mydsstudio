@@ -60,7 +60,7 @@ export function ProposalPicker({
 
   return (
     <div
-      className="rounded-app-md border border-app-border bg-app-bg-raised p-3"
+      className="rounded-app-lg bg-app-bg-raised p-3 shadow-app-card"
       data-testid="proposal-picker"
       data-axis={interaction.axis.join(",")}
       data-target={interaction.target}
@@ -73,7 +73,7 @@ export function ProposalPicker({
             type="button"
             disabled={disabled}
             onClick={() => onPick(variant)}
-            className="flex flex-col items-center gap-2 rounded-app-sm border border-app-border bg-app-paper p-3 text-left transition hover:border-app-link disabled:opacity-40"
+            className="flex flex-col items-center gap-2 rounded-app-md bg-app-paper p-3 text-left shadow-app-edge transition-shadow hover:shadow-app-focus disabled:opacity-40"
             data-testid={`proposal-variant-${variant.id}`}
           >
             <div className="ds-preview-root flex w-full items-center justify-center rounded-app-sm p-2">

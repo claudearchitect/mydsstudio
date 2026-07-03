@@ -38,7 +38,7 @@ export function RegionCommentPopover({
 
   return (
     <div
-      className="absolute z-10 w-72 rounded-app-md border border-app-border bg-app-bg-raised p-3 shadow-lg"
+      className="absolute z-10 w-72 rounded-app-md bg-app-bg-raised p-3 shadow-app-overlay"
       style={{ left: anchorRect.left, top: anchorRect.top + anchorRect.height + 8 }}
       data-testid="region-comment-popover"
       data-target={componentId}
@@ -70,13 +70,13 @@ export function RegionCommentPopover({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="What feels off here?"
-          className="rounded-app-sm border border-app-border bg-app-bg-input px-2 py-1.5 text-sm text-app-text placeholder:text-app-text-muted focus:outline-none focus:border-app-link"
+          className="rounded-app-sm bg-app-bg-input px-2 py-1.5 text-sm text-app-text shadow-app-input transition-shadow placeholder:text-app-text-muted focus:outline-none focus:shadow-app-focus"
           data-testid="region-comment-input"
         />
         <button
           type="submit"
           disabled={text.trim().length === 0}
-          className="self-end rounded-app-pill bg-app-accent px-3 py-1 text-xs font-medium text-app-text disabled:opacity-40"
+          className="self-end rounded-app-pill bg-app-accent px-3 py-1 text-xs font-medium text-white transition hover:bg-app-accent-hover disabled:opacity-40 disabled:hover:bg-app-accent"
           data-testid="region-comment-submit"
         >
           Send

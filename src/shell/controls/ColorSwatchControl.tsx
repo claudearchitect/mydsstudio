@@ -67,7 +67,7 @@ export function ColorSwatchControl({
         disabled={disabled}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={flush}
-        className="h-6 w-6 cursor-pointer rounded-app-sm border border-app-border bg-transparent p-0 disabled:opacity-40"
+        className="h-6 w-6 cursor-pointer rounded-app-sm bg-transparent p-0 shadow-app-edge disabled:opacity-40"
         data-testid={`color-swatch-input-${dottedRef}`}
       />
     </label>

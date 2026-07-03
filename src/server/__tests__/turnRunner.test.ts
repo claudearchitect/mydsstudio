@@ -326,7 +326,10 @@ describe("runTurn — request shape sent to the client", () => {
 
     const tools = calls[0].params.tools as Array<{ name: string; strict?: boolean }>;
     expect(tools).toHaveLength(3);
-    expect(tools.every((t) => t.strict === true)).toBe(true);
+    // interact runs non-strict (see tools.ts's NON_STRICT_TOOLS doc comment
+    // — its flattened union schema trips Anthropic's strict-mode grammar
+    // complexity limit); every other tool is strict.
+    expect(tools.every((t) => t.strict === (t.name !== TOOL_NAMES.interact))).toBe(true);
     expect(tools.map((t) => t.name)).toEqual([
       TOOL_NAMES.updateBeliefs,
       TOOL_NAMES.interact,

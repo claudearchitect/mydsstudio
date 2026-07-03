@@ -125,7 +125,13 @@ describe("Strict JSON schema derivation", () => {
     );
   });
 
-  it("every object node sets additionalProperties: false and required == all its properties", () => {
+  it("every true object schema node (one that declares properties) sets additionalProperties: false and required == all its properties", () => {
+    // A discriminated-union root (interact's InteractInputSchema) is typed
+    // "object" for Anthropic's tool API (top-level type is required — see
+    // toJsonSchema.ts's ensureObjectRoot) but has no `properties` of its
+    // own; it's excluded here by the `properties !== undefined` check, same
+    // as toJsonSchema.ts's enforceStrict. Each union branch (ask | propose)
+    // IS a true object schema and is still walked/asserted normally.
     function walk(node: unknown) {
       if (Array.isArray(node)) {
         node.forEach(walk);
@@ -133,15 +139,58 @@ describe("Strict JSON schema derivation", () => {
       }
       if (node && typeof node === "object") {
         const obj = node as Record<string, unknown>;
-        if (obj.type === "object") {
+        if (obj.type === "object" && obj.properties !== undefined) {
           expect(obj.additionalProperties).toBe(false);
-          const props = (obj.properties as Record<string, unknown>) ?? {};
+          const props = obj.properties as Record<string, unknown>;
           expect(new Set(obj.required as string[])).toEqual(new Set(Object.keys(props)));
         }
         for (const v of Object.values(obj)) walk(v);
       }
     }
     for (const tool of tools) walk(tool.input_schema);
+  });
+
+  it("strips minimum/maximum from every number/integer node (Anthropic's tool API rejects them — discovered via the Phase 2 live-API gate: a 400 'For number type, properties maximum, minimum are not supported' on every live turn, from ConfidencePatchOpSchema's z.number().min(0).max(1))", () => {
+    function walk(node: unknown) {
+      if (Array.isArray(node)) {
+        node.forEach(walk);
+        return;
+      }
+      if (node && typeof node === "object") {
+        const obj = node as Record<string, unknown>;
+        if (obj.type === "number" || obj.type === "integer") {
+          expect(obj.minimum).toBeUndefined();
+          expect(obj.maximum).toBeUndefined();
+          expect(obj.exclusiveMinimum).toBeUndefined();
+          expect(obj.exclusiveMaximum).toBeUndefined();
+        }
+        for (const v of Object.values(obj)) walk(v);
+      }
+    }
+    for (const tool of tools) walk(tool.input_schema);
+
+    // Confirms the test actually exercises a number node that *would* have
+    // carried minimum/maximum before the fix (a schema with no number nodes
+    // at all would make the assertions above vacuously true).
+    const updateBeliefsSchema = tools.find((t) => t.name === "update_beliefs")!.input_schema;
+    expect(JSON.stringify(updateBeliefsSchema)).toContain('"type":"number"');
+  });
+
+  it("every tool's input_schema declares a top-level type of object with no oneOf/anyOf at the root (Anthropic's tool API rejects both a missing root type AND a root-level oneOf/anyOf — discovered via the Phase 2 live-API gate: first a 400 'input_schema.type: Field required', then, after adding a sibling type, a second 400 'input_schema does not support oneOf, allOf, or anyOf at the top level'; interact's InteractInputSchema is a top-level z.discriminatedUnion, flattened by flattenTopLevelUnion in toJsonSchema.ts)", () => {
+    for (const tool of tools) {
+      expect(tool.input_schema.type).toBe("object");
+      expect(tool.input_schema.oneOf).toBeUndefined();
+      expect(tool.input_schema.anyOf).toBeUndefined();
+    }
+    // interact's schema specifically must still express both branches: a
+    // `mode` property whose value narrows the shape (this test would be
+    // vacuous if the fix had instead dropped propose-only fields entirely
+    // rather than flattening them in as nullable).
+    const interactSchema = tools.find((t) => t.name === "interact")!.input_schema;
+    const props = interactSchema.properties as Record<string, unknown>;
+    expect(Object.keys(props).sort()).toEqual(
+      ["axis", "caption", "question", "quickReplies", "target", "variants", "mode"].sort(),
+    );
   });
 });
 

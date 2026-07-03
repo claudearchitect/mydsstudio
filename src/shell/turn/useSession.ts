@@ -183,7 +183,16 @@ export function useSession({
         return;
       }
       const restored = restoreSession();
-      if (restored) {
+      // Only treat this as "a session to resume" if it actually has
+      // conversation history. A session persisted before its kickoff turn
+      // ever resolved (e.g. the tab was closed mid-kickoff, or — as
+      // happened during Phase 2 dev — a demo-mode mount's empty state got
+      // saved microseconds before a mode switch remounted into live mode)
+      // parses fine but has an empty transcript; treating *that* as
+      // "restored" would permanently skip the kickoff turn (kickedOffRef
+      // latched true) and leave the session stuck with no opening
+      // question forever. Only a non-empty transcript is real history.
+      if (restored && restored.transcript.length > 0) {
         setBeliefState(restored.beliefState);
         setTranscript(restored.transcript);
         // A restored session already has its own history — never replay

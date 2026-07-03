@@ -87,7 +87,7 @@ export function PreviewPane({
           </div>
           {completed && (
             <span
-              className="rounded-app-pill border border-app-positive px-2 py-0.5 text-[11px] font-medium text-app-positive"
+              className="rounded-app-pill px-2 py-0.5 text-[11px] font-medium text-app-positive shadow-[0_0_0_1px_var(--app-positive)]"
               data-testid="completion-badge"
             >
               Ready to export
@@ -98,7 +98,7 @@ export function PreviewPane({
           type="button"
           onClick={onExport}
           disabled={!onExport}
-          className="rounded-app-pill bg-app-accent px-4 py-1.5 text-sm font-medium text-app-text disabled:opacity-60"
+          className="rounded-app-pill bg-app-accent px-4 py-1.5 text-sm font-medium text-white transition hover:bg-app-accent-hover disabled:opacity-60 disabled:hover:bg-app-accent"
           data-testid="export-button"
         >
           Export
@@ -107,7 +107,7 @@ export function PreviewPane({
 
       <div className="flex flex-1 items-center justify-center overflow-auto p-8">
         <div
-          className="ds-preview-root h-full w-full rounded-app-lg border border-app-border p-6"
+          className="ds-preview-root h-full w-full rounded-app-lg p-6 shadow-app-paper"
           data-testid="ds-preview-root"
         >
           <RegionSelectOverlay

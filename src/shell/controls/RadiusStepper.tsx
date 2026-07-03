@@ -57,7 +57,7 @@ export function RadiusStepper({
       data-token-ref={dottedRef}
     >
       <span className="text-xs text-app-text-secondary">{label}</span>
-      <div className="flex items-center gap-1 rounded-app-sm border border-app-border bg-app-bg-input px-1 py-0.5">
+      <div className="flex items-center gap-1 rounded-app-sm bg-app-bg-input px-1 py-0.5 shadow-app-edge">
         <button
           type="button"
           disabled={disabled || local <= min}

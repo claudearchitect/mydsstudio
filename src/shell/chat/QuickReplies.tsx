@@ -23,7 +23,7 @@ export function QuickReplies({ quickReplies, onPick, disabled }: QuickRepliesPro
           type="button"
           disabled={disabled}
           onClick={() => onPick(reply)}
-          className="rounded-app-pill border border-app-border bg-app-bg-raised px-3 py-1.5 text-xs text-app-text hover:border-app-link disabled:opacity-40"
+          className="rounded-app-pill bg-app-bg-raised px-3 py-1.5 text-xs text-app-text-secondary shadow-app-edge transition hover:bg-app-bg-input hover:text-app-text hover:shadow-[0_0_0_1px_var(--app-border-strong)] disabled:opacity-40"
           data-testid={`quick-reply-${reply.id}`}
         >
           {reply.label}

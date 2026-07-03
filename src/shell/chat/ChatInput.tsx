@@ -29,7 +29,7 @@ export function ChatInput({ onSubmit, disabled, placeholder }: ChatInputProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-center gap-2 rounded-app-md border border-app-border bg-app-bg-input px-3 py-2 focus-within:border-app-link"
+      className="flex items-center gap-2 rounded-app-lg bg-app-bg-input px-3 py-2 shadow-app-input transition-shadow focus-within:shadow-app-focus"
       data-testid="chat-input-form"
     >
       <input
@@ -44,7 +44,7 @@ export function ChatInput({ onSubmit, disabled, placeholder }: ChatInputProps) {
       <button
         type="submit"
         disabled={disabled || value.trim().length === 0}
-        className="rounded-app-pill bg-app-accent px-3 py-1 text-xs font-medium text-app-text disabled:opacity-40"
+        className="rounded-app-pill bg-app-accent px-3 py-1 text-xs font-medium text-white transition hover:bg-app-accent-hover disabled:opacity-40 disabled:hover:bg-app-accent"
         data-testid="chat-input-submit"
       >
         Send
