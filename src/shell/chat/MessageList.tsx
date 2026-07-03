@@ -14,6 +14,7 @@ import type {
   RenderComponent,
 } from "@/contracts";
 import type { TranscriptEntry } from "../state/transcript";
+import { TurnErrorBanner } from "../feedback/TurnErrorBanner";
 import { QuickReplies } from "./QuickReplies";
 import { ProposalPicker } from "./ProposalPicker";
 
@@ -105,24 +106,7 @@ function TranscriptRow({
   }
 
   // agentError
-  return (
-    <div
-      className="flex max-w-[85%] flex-col gap-2 rounded-app-md bg-app-bg-raised px-3 py-2 text-sm shadow-[0_0_0_1px_var(--app-negative),0_2px_8px_rgba(0,0,0,0.24)]"
-      data-testid="transcript-error-banner"
-    >
-      <span className="text-app-negative">
-        Something went wrong ({entry.code}): {entry.message}
-      </span>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="self-start rounded-app-pill px-3 py-1 text-xs text-app-negative shadow-[0_0_0_1px_var(--app-negative)] transition hover:bg-app-negative hover:text-white"
-        data-testid="retry-button"
-      >
-        Retry
-      </button>
-    </div>
-  );
+  return <TurnErrorBanner code={entry.code} message={entry.message} onRetry={onRetry} />;
 }
 
 function LiveInteractionCard({

@@ -34,6 +34,10 @@ import { StudioShell } from "./StudioShell";
 import { ChatPanel } from "./chat/ChatPanel";
 import { PreviewPane } from "./preview/PreviewPane";
 import { DevInspectorPanel } from "./inspector/DevInspectorPanel";
+import { WelcomeScreen } from "./welcome/WelcomeScreen";
+import { SessionsRail } from "./sessions/SessionsRail";
+import { listSessions, recordSession, type SessionSummary } from "./sessions/sessionsIndex";
+import { LoadingState } from "./feedback/LoadingState";
 import { useSession } from "./turn/useSession";
 import { FakeTurnAgent } from "./turn/fakeTurnAgent";
 import { RealTurnAgent } from "./turn/realTurnAgent";
@@ -44,6 +48,7 @@ import {
   normalizeRegionMessage,
 } from "./messages/normalize";
 import { lookupTokenValue } from "./controls/tokenLookup";
+import { restoreSession, clearSession } from "./state/sessionStorage";
 
 export interface SessionProps {
   renderComponent?: RenderComponent;
@@ -52,43 +57,80 @@ export interface SessionProps {
 export function Session({ renderComponent }: SessionProps) {
   const turnMode = useTurnMode();
 
-  // SessionInner is keyed by the *resolved* mode itself, not a separately
-  // tracked counter: every distinct mode value gets its own mount (and
-  // therefore its own freshly constructed agent — see SessionInner's
-  // `agent` useMemo). This is deliberately simple to avoid a class of bugs
-  // where a provisional first render (mode defaults to "demo" while the
-  // health probe is in flight — see useTurnMode) constructs a
-  // FakeTurnAgent-backed SessionInner, the probe then resolves to "live",
-  // and — unless that resolution *also* forces a remount — the existing
-  // instance is left driving the wrong agent underneath an updated toggle
-  // label. Not rendering SessionInner at all until the probe resolves
-  // sidesteps the provisional-mount case entirely; the toggle keys any
-  // later explicit switch the same way, so both paths are one mechanism.
+  // Two-phase gate: a "welcome" landing screen precedes the live session.
+  // `phase` flips to "active" only once the user starts (fresh) or resumes.
+  // `sessionKey` bumps to force a clean SessionInner remount for a fresh
+  // start / "new session" even when the resolved mode is unchanged.
+  const [phase, setPhase] = useState<"welcome" | "active">("welcome");
+  const [sessionKey, setSessionKey] = useState(0);
+  const [resume, setResume] = useState<{
+    has: boolean;
+    summary?: { product?: string; savedAt?: string };
+  }>({ has: false });
+
+  // Detect a resumable snapshot on mount (client-only; localStorage is empty
+  // server-side). Only a snapshot with real conversation history counts as
+  // resumable — mirrors useSession's own restore guard.
+  useEffect(() => {
+    queueMicrotask(() => {
+      const restored = restoreSession();
+      if (restored && restored.transcript.length > 0) {
+        setResume({
+          has: true,
+          summary: {
+            product: restored.beliefState.meta.product || undefined,
+            savedAt: restored.savedAt,
+          },
+        });
+      }
+    });
+  }, []);
+
+  // Gate SessionInner behind the health probe (see useTurnMode): rendering it
+  // before the probe resolves would construct an agent against a provisional
+  // mode and then need a forced remount when the probe flips it. The welcome
+  // screen also needs `liveAvailable`, so we wait here for both.
   if (!turnMode.resolved) {
-    return <SessionLoading />;
+    return <LoadingState label="Preparing your studio…" />;
+  }
+
+  if (phase === "welcome") {
+    return (
+      <WelcomeScreen
+        liveAvailable={turnMode.liveAvailable}
+        hasResumableSession={resume.has}
+        resumeSummary={resume.summary}
+        onStart={(mode) => {
+          // Fresh start — discard any prior snapshot so useSession doesn't
+          // restore it, then mount a clean session in the chosen mode.
+          clearSession();
+          turnMode.setMode(mode);
+          setSessionKey((k) => k + 1);
+          setPhase("active");
+        }}
+        onResume={() => {
+          // Keep the snapshot; SessionInner's useSession restores it.
+          setPhase("active");
+        }}
+      />
+    );
   }
 
   return (
     <SessionInner
-      key={turnMode.mode}
+      key={`${turnMode.mode}:${sessionKey}`}
       mode={turnMode.mode}
       liveAvailable={turnMode.liveAvailable}
       resolved={turnMode.resolved}
       onModeChange={turnMode.setMode}
       onLiveFailure={turnMode.reportLiveFailure}
+      onNewSession={() => {
+        clearSession();
+        setResume({ has: false });
+        setPhase("welcome");
+      }}
       renderComponent={renderComponent}
     />
-  );
-}
-
-function SessionLoading() {
-  return (
-    <div
-      className="flex h-dvh w-full items-center justify-center bg-app-bg text-sm text-app-text-muted"
-      data-testid="session-loading"
-    >
-      Loading…
-    </div>
   );
 }
 
@@ -98,6 +140,8 @@ interface SessionInnerProps {
   resolved: boolean;
   onModeChange: (mode: TurnMode) => void;
   onLiveFailure: (code: string) => void;
+  /** Discard the current session and return to the welcome screen. */
+  onNewSession: () => void;
   renderComponent?: RenderComponent;
 }
 
@@ -107,6 +151,7 @@ function SessionInner({
   resolved,
   onModeChange,
   onLiveFailure,
+  onNewSession,
   renderComponent,
 }: SessionInnerProps) {
   const agent = useMemo(
@@ -142,6 +187,41 @@ function SessionInner({
     sendMessage,
     retry,
   } = useSession({ agent });
+
+  // Stable id for this mounted session — a fresh mount is a fresh session
+  // (Session.tsx remounts SessionInner with a new key on start/new-session).
+  const sessionId = useMemo(() => crypto.randomUUID(), []);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+
+  // Feed the sessions rail: record this session (upsert by id) once it has
+  // settled content, then refresh the rail's list. On mount (empty
+  // transcript) this just loads the existing index. Deferred via
+  // queueMicrotask so the effect body makes no synchronous setState call
+  // (react-hooks/set-state-in-effect) — the same pattern useSession uses for
+  // its post-mount localStorage work. The index holds summaries only, never
+  // belief state, so this stays clear of the single-writer invariant.
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (transcript.length > 0) {
+        recordSession({
+          id: sessionId,
+          title: beliefState.meta.product || "Untitled session",
+          subtitle: mode === "live" ? "Live session" : "Demo session",
+          updatedAt: new Date().toISOString(),
+          status: "active",
+        });
+      }
+      setSessions(listSessions());
+    });
+  }, [beliefState, transcript.length, sessionId, mode]);
+
+  function handleSelectSession(id: string) {
+    // Selecting a *past* session can't restore its belief state yet — only
+    // the latest snapshot is persisted (single-session storage). The active
+    // session is already on screen; this is a visual affordance pending
+    // per-session persistence, kept as an explicit extension point.
+    void id;
+  }
 
   const handleSendMessage = useCallback(
     async (message: Parameters<typeof sendMessage>[0]) => {
@@ -180,6 +260,14 @@ function SessionInner({
   return (
     <div className="flex h-full w-full flex-col" data-testid="session-root">
       <StudioShell
+        railSlot={
+          <SessionsRail
+            sessions={sessions}
+            activeId={sessionId}
+            onSelect={handleSelectSession}
+            onNewSession={onNewSession}
+          />
+        }
         chatSlot={
           <div className="flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-app-border px-4 py-2">

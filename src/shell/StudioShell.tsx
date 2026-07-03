@@ -7,6 +7,9 @@
 import type { ReactNode } from "react";
 
 export interface StudioShellProps {
+  /** Far-left column: the previous-sessions navigation rail (Workstream B).
+   * Optional so the Phase-0 placeholder and tests can omit it. */
+  railSlot?: ReactNode;
   /** Left column: conversation surface. Workstream B mounts the real chat
    * panel here (V0_PLAN.md Workstream B "Session UI shell"). */
   chatSlot?: ReactNode;
@@ -15,9 +18,15 @@ export interface StudioShellProps {
   previewSlot?: ReactNode;
 }
 
-export function StudioShell({ chatSlot, previewSlot }: StudioShellProps) {
+export function StudioShell({ railSlot, chatSlot, previewSlot }: StudioShellProps) {
   return (
     <div className="flex h-dvh w-full bg-app-bg text-app-text">
+      {railSlot && (
+        <div className="shrink-0 border-r border-app-border" data-shell="sessions-rail">
+          {railSlot}
+        </div>
+      )}
+
       <aside
         className="flex w-[420px] shrink-0 flex-col border-r border-app-border bg-app-bg-deep"
         data-shell="chat-column"
