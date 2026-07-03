@@ -42,6 +42,7 @@ describe("RealTurnAgent", () => {
           interaction: { mode: "ask", question: "q?", quickReplies: [] },
           usage: { inputTokens: 1, outputTokens: 1, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 },
           patch: EMPTY_TOKEN_PATCH,
+          completed: false,
         },
       ]),
     );
@@ -81,6 +82,7 @@ describe("RealTurnAgent", () => {
       interaction: { mode: "ask", question: "q?", quickReplies: [] },
       usage: { inputTokens: 1, outputTokens: 1, cacheReadInputTokens: 5, cacheCreationInputTokens: 0 },
       patch: EMPTY_TOKEN_PATCH,
+      completed: false,
     };
     const fetchMock = vi.fn().mockResolvedValue(sseResponse([turnEvent]));
     vi.stubGlobal("fetch", fetchMock);
@@ -137,6 +139,7 @@ describe("RealTurnAgent", () => {
           interaction: { mode: "ask", question: "kickoff?", quickReplies: [] },
           usage: { inputTokens: 1, outputTokens: 1, cacheReadInputTokens: 0, cacheCreationInputTokens: 0 },
           patch: EMPTY_TOKEN_PATCH,
+          completed: false,
         },
       ]),
     );

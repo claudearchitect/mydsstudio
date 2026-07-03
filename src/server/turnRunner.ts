@@ -232,6 +232,7 @@ function finalizeSuccessfulTurn(params: {
   ];
 
   let interactionForWire: import("@/contracts").Interaction;
+  const completed = Boolean(toolCalls.exportDesignMd);
   if (toolCalls.interact) {
     const interactEventId = nextEventId(seed);
     newEvents.push({
@@ -281,6 +282,7 @@ function finalizeSuccessfulTurn(params: {
     interaction: interactionForWire,
     usage: turnUsage,
     patch: toolCalls.updateBeliefs.patch,
+    completed,
   });
 
   const priorTurnRecord: PriorTurnRecord | undefined = toolCalls.interact

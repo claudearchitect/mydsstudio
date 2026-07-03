@@ -48,6 +48,11 @@ export interface UseSessionResult {
   sendMessage: (message: NormalizedMessage) => Promise<void>;
   retry: () => void;
   agentExhausted: boolean;
+  /** True once the agent has signaled confident completion (V0_PLAN.md
+   * Phase 2 "Completion state") — drives the Export CTA. Reset to false on
+   * every new turn until that turn's result says otherwise, so it always
+   * reflects the *latest* turn, not "ever completed this session". */
+  completed: boolean;
 }
 
 export function useSession({
@@ -70,6 +75,7 @@ export function useSession({
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
+  const [completed, setCompleted] = useState(false);
 
   const lastMessageRef = useRef<NormalizedMessage | null>(null);
   const kickedOffRef = useRef(false);
@@ -80,6 +86,12 @@ export function useSession({
       setStreamingText("");
       setError(null);
       lastMessageRef.current = message;
+      // Not resetting `completed` here: a mid-flight turn (e.g. the user
+      // sends one more nudge after completion) should keep showing the
+      // Export CTA until the *new* turn's result says otherwise — flipping
+      // it off during the in-flight window would flash the CTA away and
+      // back for no reason. `completed` is set from `result.completed` once
+      // the turn settles, whatever that turns out to be.
 
       let result: TurnAgentResult;
       try {
@@ -113,6 +125,7 @@ export function useSession({
 
       setBeliefState(result.beliefState);
       setInteraction(result.interaction);
+      setCompleted(Boolean(result.completed));
       setTranscript((prev) => [
         ...prev,
         {
@@ -121,6 +134,7 @@ export function useSession({
           interaction: result.interaction,
           deltaText: streamingText || undefined,
           ts: new Date().toISOString(),
+          completed: result.completed,
         },
       ]);
     },
@@ -221,5 +235,6 @@ export function useSession({
     sendMessage,
     retry,
     agentExhausted: agent.exhausted,
+    completed,
   };
 }

@@ -20,6 +20,11 @@ export interface AgentInteractionEntry {
   interaction: Interaction;
   deltaText?: string;
   ts: string;
+  /** True iff this turn was confident completion (the agent called
+   * export_design_md) — see turn/turnAgent.ts's TurnAgentSuccess.completed.
+   * Drives the Export CTA surfaced in the chat panel (Phase 2: "Completion
+   * state"). */
+  completed?: boolean;
 }
 
 export interface AgentErrorEntry {

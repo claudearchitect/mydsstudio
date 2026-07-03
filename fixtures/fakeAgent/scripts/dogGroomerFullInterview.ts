@@ -155,6 +155,41 @@ const t08Patch: TokenPatch = {
   confidence: [{ group: "typography", confidence: 0.5 }],
 };
 
+/** The demo's confident-completion turn — mirrors what a live session's
+ * final `update_beliefs` call would look like right before the model calls
+ * `export_design_md` instead of `interact`: every touched group crosses the
+ * sharp reveal threshold (REVEAL_CONFIG.sharpThreshold = 0.85, see
+ * src/preview/revealState.ts) and a plausible elevation guess rounds out
+ * the last unexplored group, so the full component library reads sharp for
+ * the demo's Export CTA moment. */
+const t09Patch: TokenPatch = {
+  ...EMPTY_TOKEN_PATCH,
+  tokens: [
+    { group: "spacing", token: "inset", $value: "16px", $type: "dimension" },
+    {
+      group: "elevation",
+      token: "card",
+      $value: "0 1px 2px rgba(0,0,0,0.06)",
+      $type: "shadow",
+    },
+  ],
+  confidence: [
+    { group: "color", confidence: 0.92 },
+    { group: "shape", confidence: 0.9 },
+    { group: "typography", confidence: 0.88 },
+    { group: "spacing", confidence: 0.87 },
+    { group: "elevation", confidence: 0.85 },
+  ],
+  rationale: [
+    {
+      id: "r05",
+      claim: "subtle elevation to keep cards grounded without feeling heavy, consistent with the soft/friendly direction",
+      tokens: ["elevation.card"],
+      evidence: ["fake-t09"],
+    },
+  ],
+};
+
 export const dogGroomerFullInterviewScript: FakeAgentScript = {
   name: "dog-groomer-full-interview",
   turns: [
@@ -334,6 +369,17 @@ export const dogGroomerFullInterviewScript: FakeAgentScript = {
         mode: "ask",
         question: "This is feeling solid — anything else you'd like to adjust before we wrap up?",
         quickReplies: [{ id: "done", label: "Looks good, I'm done" }],
+      },
+    },
+    {
+      id: "t09",
+      deltaText: "Great — I think this design system is in good shape. Your design.md is ready whenever you want it.",
+      patch: t09Patch,
+      completed: true,
+      interaction: {
+        mode: "ask",
+        question: "Your design.md is ready. Would you like to keep refining, or is this good?",
+        quickReplies: [],
       },
     },
   ],

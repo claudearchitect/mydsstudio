@@ -111,6 +111,7 @@ export class RealTurnAgent implements TurnAgent {
           kind: "success",
           beliefState: event.beliefState,
           interaction: event.interaction,
+          completed: event.completed,
         };
       }
     } catch (err) {

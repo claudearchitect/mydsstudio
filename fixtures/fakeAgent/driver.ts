@@ -16,6 +16,7 @@ export interface FakeAgentStepResult {
   turn: FakeAgentTurn;
   beliefState: BeliefState;
   interaction: Interaction;
+  completed: boolean;
 }
 
 export class FakeAgentDriver {
@@ -46,7 +47,12 @@ export class FakeAgentDriver {
     const eventId = `fake-${turn.id}`;
     this.state = applyPatch(this.state, turn.patch, eventId);
     this.cursor += 1;
-    return { turn, beliefState: this.state, interaction: turn.interaction };
+    return {
+      turn,
+      beliefState: this.state,
+      interaction: turn.interaction,
+      completed: Boolean(turn.completed),
+    };
   }
 
   reset(state: BeliefState): void {

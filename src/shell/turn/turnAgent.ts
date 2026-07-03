@@ -17,6 +17,12 @@ export interface TurnAgentSuccess {
   kind: "success";
   beliefState: BeliefState;
   interaction: Interaction;
+  /** True iff this turn ended in confident completion (the model called
+   * `export_design_md` rather than `interact`) — see turnWireFormat.ts's
+   * `TurnFinalEvent.completed`. Defaults to false for adapters that have no
+   * notion of it (e.g. a fake-agent script whose every turn is an
+   * ordinary interact). */
+  completed?: boolean;
 }
 
 export interface TurnAgentError {

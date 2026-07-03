@@ -65,6 +65,18 @@ export const TurnFinalEventSchema = z.object({
    * read `beliefState`/`interaction`/`usage` are unaffected.
    */
   patch: TokenPatchSchema,
+  /**
+   * True iff the model called `export_design_md` this turn rather than
+   * `interact` (V0_PLAN.md Phase 2: "Completion state: when the model
+   * signals confident completion, surface flagged/low-confidence guesses +
+   * an Export CTA"). `interaction` still carries a synthesized ask-shaped
+   * completion acknowledgement in this case (see turnRunner.ts) so clients
+   * that ignore this field keep working — this is purely an additive signal
+   * for clients that want to react to completion distinctly from an
+   * ordinary `ask` (e.g. surfacing the Export CTA prominently instead of a
+   * quick-reply chip). Defaults to false for the ordinary interact path.
+   */
+  completed: z.boolean(),
 });
 export type TurnFinalEvent = z.infer<typeof TurnFinalEventSchema>;
 

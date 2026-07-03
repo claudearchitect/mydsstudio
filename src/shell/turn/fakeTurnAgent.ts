@@ -58,6 +58,7 @@ export class FakeTurnAgent implements TurnAgent {
       kind: "success",
       beliefState: step.beliefState,
       interaction: step.interaction,
+      completed: step.completed,
     };
   }
 }

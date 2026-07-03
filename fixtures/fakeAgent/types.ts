@@ -19,6 +19,11 @@ export interface FakeAgentTurn {
   deltaText?: string;
   patch: TokenPatch;
   interaction: Interaction;
+  /** Mirrors TurnFinalEvent.completed (turnWireFormat.ts) — true for a
+   * script's terminal "confident completion" turn, so demo mode can
+   * exercise the same Export-CTA surface a live export_design_md call
+   * would. Defaults to false/omitted for every ordinary interact turn. */
+  completed?: boolean;
 }
 
 export interface FakeAgentScript {
