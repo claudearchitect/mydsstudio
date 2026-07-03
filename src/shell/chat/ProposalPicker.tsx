@@ -130,24 +130,39 @@ export function ProposalPicker({
       <p className="mb-3 text-sm text-app-text">{interaction.caption}</p>
       <div className="grid grid-cols-2 gap-2">
         {variantStates.map(({ variant, previewState }) => (
-          <button
+          // A clickable div, not a <button>: the rendered variant is a real
+          // component that can itself contain a <button>/<input> (e.g.
+          // button.primary, nav) — nesting those in a <button> is invalid HTML
+          // and triggers hydration errors. role/tabIndex/keydown keep it
+          // keyboard-accessible.
+          <div
             key={variant.id}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPick(variant)}
-            className="flex flex-col items-center gap-2 rounded-app-md bg-app-paper p-3 text-left shadow-app-edge transition-shadow hover:shadow-app-focus disabled:opacity-40"
+            role="button"
+            tabIndex={disabled ? -1 : 0}
+            onClick={() => {
+              if (!disabled) onPick(variant);
+            }}
+            onKeyDown={(e) => {
+              if (!disabled && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                onPick(variant);
+              }
+            }}
+            className={`flex flex-col items-center gap-2 rounded-app-md bg-app-paper p-3 text-left shadow-app-edge transition-shadow ${
+              disabled ? "cursor-default opacity-40" : "cursor-pointer hover:shadow-app-focus"
+            }`}
             data-testid={`proposal-variant-${variant.id}`}
           >
             <div
               className="ds-preview-root flex w-full items-center justify-center rounded-app-sm p-2"
-              style={resolveTokens(previewState) as CSSProperties}
+              style={{ ...(resolveTokens(previewState) as CSSProperties), pointerEvents: "none" }}
             >
               {renderComponent(previewState, target)}
             </div>
             <span className="text-xs font-medium" style={{ color: "#2b2a26" }}>
               {variant.caption}
             </span>
-          </button>
+          </div>
         ))}
       </div>
       <button
