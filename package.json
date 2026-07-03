@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "cli": "node --experimental-strip-types --no-warnings --import ./src/server/cli/register.mjs src/server/cli/harness.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
