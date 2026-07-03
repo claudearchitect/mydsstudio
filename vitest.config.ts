@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: false,
+    // Never discover tests inside nested agent worktrees — they are separate
+    // repo checkouts and would run against the wrong source tree.
+    exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**", ".claude/**"],
   },
   resolve: {
     alias: {
