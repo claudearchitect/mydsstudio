@@ -47,7 +47,7 @@ export interface PreviewPaneProps {
   beliefState: BeliefState;
   disabled?: boolean;
   onRegionComment: (target: string, text: string) => void;
-  onControlMessage: (target: string, text: string) => void;
+  onControlMessage: (target: string, text: string, displayText?: string) => void;
   onExport?: () => void;
   renderComponent?: RenderComponent;
   /** True when the agent has signaled confident completion this turn

@@ -264,11 +264,13 @@ function SessionInner({
 
   function handleRegionComment(target: string, text: string) {
     const message = normalizeRegionMessage(target, text, (ref) => lookupTokenValue(beliefState, ref));
-    void handleSendMessage(message);
+    // The region message's text is the user's own comment, so the default
+    // display (message.text) is already human-facing; add the target for context.
+    void handleSendMessage(message, `On ${target}: ${text}`);
   }
 
-  function handleControlMessage(target: string, text: string) {
-    void handleSendMessage(normalizeControlMessage(target, text));
+  function handleControlMessage(target: string, text: string, displayText?: string) {
+    void handleSendMessage(normalizeControlMessage(target, text), displayText);
   }
 
   return (
@@ -326,7 +328,7 @@ function SessionInner({
                 beliefState={beliefState}
                 isStreaming={isStreaming}
                 streamingText={streamingText}
-                onSendMessage={(m) => void handleSendMessage(m)}
+                onSendMessage={(m, d) => void handleSendMessage(m, d)}
                 onRetry={retry}
                 renderComponent={renderComponent}
               />

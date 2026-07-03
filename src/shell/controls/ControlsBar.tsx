@@ -35,7 +35,7 @@ export interface ControlsBarProps {
   beliefState: BeliefState;
   disabled?: boolean;
   onPendingChange: (dottedRef: string, $value: string | number, $type: "color" | "dimension") => void;
-  onSendMessage: (target: string, text: string) => void;
+  onSendMessage: (target: string, text: string, displayText?: string) => void;
 }
 
 export function ControlsBar({
@@ -59,7 +59,7 @@ export function ControlsBar({
             onPending={(hex) => onPendingChange(ref, hex, "color")}
             onSettle={(hex) => {
               const msg = normalizeControlMessage(ref, describeColorControl(ref, hex, label));
-              onSendMessage(msg.target, msg.text);
+              onSendMessage(msg.target, msg.text, `${label} → ${hex}`);
             }}
           />
         );
@@ -78,7 +78,7 @@ export function ControlsBar({
             onPending={(px) => onPendingChange(ref, `${px}px`, "dimension")}
             onSettle={(px) => {
               const msg = normalizeControlMessage(ref, describeRadiusControl(ref, px, label));
-              onSendMessage(msg.target, msg.text);
+              onSendMessage(msg.target, msg.text, `${label} → ${px}px`);
             }}
           />
         );

@@ -108,6 +108,12 @@ export function ProposalPicker({
   // The model's `target` may be prose, not a componentId — resolve it to a
   // real component so the variants always render (see resolveComponentId).
   const target = resolveComponentId(interaction.target);
+  // Card and nav exemplars have wide intrinsic min-widths (240px / 320px) that
+  // don't fit two-across in the ~420px chat column — a 2-col grid there
+  // overflows and pushes a horizontal scrollbar onto the whole transcript.
+  // Give wide targets a single column so each variant gets the full width.
+  const family = target.split(".")[0];
+  const wideTarget = family === "card" || family === "nav";
   const variantStates = useMemo(
     () =>
       interaction.variants.map((variant) => ({
@@ -128,7 +134,7 @@ export function ProposalPicker({
       data-target={interaction.target}
     >
       <p className="mb-3 text-sm text-app-text">{interaction.caption}</p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${wideTarget ? "grid-cols-1" : "grid-cols-2"}`}>
         {variantStates.map(({ variant, previewState }) => (
           // A clickable div, not a <button>: the rendered variant is a real
           // component that can itself contain a <button>/<input> (e.g.
@@ -148,13 +154,13 @@ export function ProposalPicker({
                 onPick(variant);
               }
             }}
-            className={`flex flex-col items-center gap-2 rounded-app-md bg-app-paper p-3 text-left shadow-app-edge transition-shadow ${
+            className={`flex min-w-0 flex-col items-center gap-2 overflow-hidden rounded-app-md bg-app-paper p-3 text-left shadow-app-edge transition-shadow ${
               disabled ? "cursor-default opacity-40" : "cursor-pointer hover:shadow-app-focus"
             }`}
             data-testid={`proposal-variant-${variant.id}`}
           >
             <div
-              className="ds-preview-root flex w-full items-center justify-center rounded-app-sm p-2"
+              className="ds-preview-root flex w-full items-center justify-center overflow-x-auto rounded-app-sm p-2"
               style={{ ...(resolveTokens(previewState) as CSSProperties), pointerEvents: "none" }}
             >
               {renderComponent(previewState, target)}
