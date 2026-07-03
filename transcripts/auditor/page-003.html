@@ -226,6 +226,38 @@ a855141 Finish turn loop: Sonnet 5 @ medium effort, robust event ids + interact
  D transcripts/auditor/index.html
  D transcripts/auditor/page-001.html
  D transcripts/auditor/page-002.html</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-03T23-14-05-523Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-03T23-14-05-523Z" class="timestamp-link"><time datetime="2026-07-03T23:14:05.523Z" data-timestamp="2026-07-03T23:14:05.523Z">2026-07-03T23:14:05.523Z</time></a></div><div class="message-content">
+<div class="thinking"><div class="thinking-label">Thinking</div></div></div></div>
+<div class="message assistant" id="msg-2026-07-03T23-14-09-169Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-03T23-14-09-169Z" class="timestamp-link"><time datetime="2026-07-03T23:14:09.169Z" data-timestamp="2026-07-03T23:14:09.169Z">2026-07-03T23:14:09.169Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Pushed — <code>main</code> is now up to date with <code>origin/main</code> (<code>77abd34..22df748</code>).</p>
+<p>One thing to flag before I touch anything else: after the push, the working tree shows three <strong>deleted</strong> files I didn't remove —</p>
+<pre><code> D transcripts/auditor/index.html
+ D transcripts/auditor/page-001.html
+ D transcripts/auditor/page-002.html
+</code></pre>
+<p>These are the auditor session transcript that was committed in <code>1128584</code>. Something removed them from the working tree (not me, not this push). I've left them alone rather than commit the deletion, since deliberately-added files disappearing is exactly the kind of change I shouldn't quietly bake in. Want me to:</p>
+<ul>
+<li><strong>restore them</strong> (<code>git checkout -- transcripts/auditor/</code>), or</li>
+<li><strong>commit the deletion</strong> (if you meant to drop them), or</li>
+<li>leave it for you to sort out?</li>
+</ul></div></div></div>
+<div class="message user" id="msg-2026-07-03T23-14-24-499Z"><div class="message-header"><span class="role-label">User</span><a href="#msg-2026-07-03T23-14-24-499Z" class="timestamp-link"><time datetime="2026-07-03T23:14:24.499Z" data-timestamp="2026-07-03T23:14:24.499Z">2026-07-03T23:14:24.499Z</time></a></div><div class="message-content">
+<div class="user-content"><p>restore them so I can stage a new commit</p></div></div></div>
+<div class="message assistant" id="msg-2026-07-03T23-14-32-697Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-03T23-14-32-697Z" class="timestamp-link"><time datetime="2026-07-03T23:14:32.697Z" data-timestamp="2026-07-03T23:14:32.697Z">2026-07-03T23:14:32.697Z</time></a></div><div class="message-content">
+<div class="tool-use bash-tool" data-tool-id="toolu_01LvUQyJjzxjQk6RuamdaJoR">
+<div class="tool-header"><span class="tool-icon">$</span> Bash</div>
+<div class="tool-description">Restore deleted transcript files</div><div class="truncatable"><div class="truncatable-content"><pre class="bash-command">cd /Users/sammysam/Workspace/mydsstudio; git checkout -- transcripts/auditor/index.html transcripts/auditor/page-001.html transcripts/auditor/page-002.html; echo ---STATUS---; git status -sb; echo ---FILES---; ls -1 transcripts/auditor/</pre></div><button class="expand-btn">Show more</button></div>
+</div></div></div>
+<div class="message tool-reply" id="msg-2026-07-03T23-14-42-678Z"><div class="message-header"><span class="role-label">Tool reply</span><a href="#msg-2026-07-03T23-14-42-678Z" class="timestamp-link"><time datetime="2026-07-03T23:14:42.678Z" data-timestamp="2026-07-03T23:14:42.678Z">2026-07-03T23:14:42.678Z</time></a></div><div class="message-content"><div class="tool-result"><div class="truncatable"><div class="truncatable-content"><pre>---STATUS---
+## main...origin/main
+---FILES---
+index.html
+page-001.html
+page-002.html
+page-003.html</pre></div><button class="expand-btn">Show more</button></div></div></div></div>
+<div class="message assistant" id="msg-2026-07-03T23-14-48-991Z"><div class="message-header"><span class="role-label">Assistant</span><a href="#msg-2026-07-03T23-14-48-991Z" class="timestamp-link"><time datetime="2026-07-03T23:14:48.991Z" data-timestamp="2026-07-03T23:14:48.991Z">2026-07-03T23:14:48.991Z</time></a></div><div class="message-content">
+<div class="assistant-text"><p>Restored. The three files are back and the working tree is clean (<code>main</code> even with <code>origin/main</code>).</p>
+<p>Note: <code>transcripts/auditor/</code> also contains a <code>page-003.html</code> that isn't tracked by git and wasn't among the deletions — so it's presumably new/uncommitted content on your side. It'll show up as untracked when you go to stage your commit; include or ignore it as you see fit.</p></div></div></div>
         
 
 <div class="pagination">
