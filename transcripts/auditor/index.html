@@ -161,10 +161,11 @@ details.continuation[open] summary { border-radius: 12px 12px 0 0; margin-bottom
 <span class="disabled">&larr; Prev</span>
 <a href="page-001.html">1</a>
 <a href="page-002.html">2</a>
+<a href="page-003.html">3</a>
 <a href="page-001.html">Next &rarr;</a>
 </div>
 
-        <p style="color: var(--text-muted); margin-bottom: 24px;">7 prompts · 337 messages · 117 tool calls · 0 commits · 2 pages</p>
+        <p style="color: var(--text-muted); margin-bottom: 24px;">12 prompts · 489 messages · 168 tool calls · 0 commits · 3 pages</p>
         
 <div class="index-item"><a href="page-001.html#msg-2026-07-03T22-27-14-236Z"><div class="index-item-header"><span class="index-item-number">#1</span><time datetime="2026-07-03T22:27:14.236Z" data-timestamp="2026-07-03T22:27:14.236Z">2026-07-03T22:27:14.236Z</time></div><div class="index-item-content"><p>I want you to audit this project, look for any bugs / issues with the API spec, any visual polish / inconsistencies you see. Create a plan to tackle these.</p></div></a><div class="index-item-stats"><span>5 read · 3 bash · 1 skill</span>
 </div></div>
@@ -22054,9 +22055,51 @@ Compose the export modal as one themed surface; gate the debug inspector; de-dup
 </ul>
 <p>Want me to start Phase 2, or would you rather do the live re-record first to close Phase 1 out end-to-end?</p></div></div><button class="expand-btn">Show more</button></div></div>
 </div></div>
-<div class="index-item"><a href="page-002.html#msg-2026-07-03T22-56-17-424Z"><div class="index-item-header"><span class="index-item-number">#7</span><time datetime="2026-07-03T22:56:17.424Z" data-timestamp="2026-07-03T22:56:17.424Z">2026-07-03T22:56:17.424Z</time></div><div class="index-item-content"><p>go ahead, also make sure we're using sonnet not opus for the main agent in the app.</p></div></a><div class="index-item-stats"><span>16 edit · 9 read · 2 bash</span>
+<div class="index-item"><a href="page-002.html#msg-2026-07-03T22-56-17-424Z"><div class="index-item-header"><span class="index-item-number">#7</span><time datetime="2026-07-03T22:56:17.424Z" data-timestamp="2026-07-03T22:56:17.424Z">2026-07-03T22:56:17.424Z</time></div><div class="index-item-content"><p>go ahead, also make sure we're using sonnet not opus for the main agent in the app.</p></div></a><div class="index-item-stats"><span>29 edit · 14 read · 10 bash · 5 mcp__claude_preview__preview_eval · 1 mcp__claude_preview__preview_fill · 1 mcp__claude_preview__preview_screenshot</span>
 <div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The user's <code>MODEL</code> change is API-compatible — Sonnet 5 accepts <code>thinking: {type: "adaptive"}</code>, <code>output_config: {effort: "high"}</code>, strict tools, and rejects sampling params exactly like the old model, so the request shape needs no other changes. But one test asserts the old model id and will now fail, plus a couple of doc/mock references. Let me fix those.</p></div></div><button class="expand-btn">Show more</button></div></div>
 <div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The streaming indicator already exists (the <code>ThinkingDots</code> + "thinking…" block during <code>isStreaming</code>), so item (d) is already covered — I'll focus on the three real gaps: auto-scroll, machine text in user bubbles, and proposal overflow. Let me start with the transcript display-text fix (item b), since it's the most visible.</p></div></div><button class="expand-btn">Show more</button></div></div>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>A live turn against <code>claude-sonnet-5</code> actually ran (there's an API key configured) and surfaced a <strong>real model-compatibility bug from the swap</strong>: the <code>interact</code> tool is non-strict, and Sonnet 5 sometimes emits <code>quickReplies: null</code> for an ask, which fails schema validation and burns the turn plus its retry. Let me look at the interaction schema.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-03T23-08-16-764Z"><div class="index-item-header"><span class="index-item-number">#8</span><time datetime="2026-07-03T23:08:16.764Z" data-timestamp="2026-07-03T23:08:16.764Z">2026-07-03T23:08:16.764Z</time></div><div class="index-item-content"><p>[Request interrupted by user]</p></div></a></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-03T23-08-16-787Z"><div class="index-item-header"><span class="index-item-number">#9</span><time datetime="2026-07-03T23:08:16.787Z" data-timestamp="2026-07-03T23:08:16.787Z">2026-07-03T23:08:16.787Z</time></div><div class="index-item-content"><p>medium effort is good too - reduce costs that way</p>
+<p>can you also commit changes as you go</p>
+<p>Time to wrap up</p></div></a><div class="index-item-stats"><span>9 bash · 4 edit · 1 read</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Now it's clear: a parallel "Claude Architect" commit (1128584) already captured my Phase 1 work and the early Phase 2 files (MessageList, ChatPanel, useSession, transcript). My remaining uncommitted changes are the model/effort/quickReplies work plus the rest of Phase 2. Let me check the stray <code>DESIGN_RATIONALE.md</code> change (not mine) before committing.</p></div></div><button class="expand-btn">Show more</button></div></div>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Wrapped up. Here's where things landed.</p>
+<h2>What I did this session</h2>
+<p><strong>Model swap (your request).</strong> The main agent now runs <code>claude-sonnet-5</code> at <code>output_config.effort: "medium"</code> instead of Opus/high, which cuts token cost. The request shape needed no other changes — Sonnet 5 accepts adaptive thinking, the effort param, and strict tools, and rejects sampling params exactly like the old model.</p>
+<p><strong>A real bug the swap exposed.</strong> A live turn against Sonnet 5 (you have an API key configured) failed with a protocol violation: Sonnet 5 emits <code>quickReplies: null</code> for a chip-less question, and since the <code>interact</code> tool runs non-strict, that null failed validation and burned the whole turn plus its one retry. I made <code>quickReplies</code> null-tolerant in the contract (coerces <code>null</code>/missing → <code>[]</code>, JSON schema still emits a plain array so the model's guidance is unchanged) and added a matching nudge to the tool description. This is the kind of thing that would have quietly degraded every session on the new model.</p>
+<p><strong>Phase 2 chat UX</strong> — the three real first-screen gaps:
+- User bubbles now show human text (<code>Picked: Bold teal</code>, <code>Radius → 12px</code>) instead of the model-facing strings like <code>user picked "..." for the color.primary proposal on button.primary</code>.
+- Auto-scroll in the transcript so new questions/proposals don't appear below the fold.
+- Proposal variants no longer overflow the ~420px chat column (wide card/nav targets go single-column; tiles clip instead of pushing a horizontal scrollbar).</p>
+<p>The streaming "no-op" I'd flagged turned out to already be covered by the existing animated thinking indicator, so I left it alone.</p>
+<h2>State</h2>
+<ul>
+<li>Branch <code>audit/context-caching-and-ux</code>, <strong>3 commits</strong> (<code>a855141</code>, <code>ddb1340</code>, <code>22df748</code>), not merged to main, not pushed.</li>
+<li><strong>253 tests green, build and lint clean.</strong></li>
+<li>Phase 1 (context/caching correctness) was already committed to main by your parallel session; the turn-runner half of it rode along in commit <code>a855141</code>.</li>
+</ul>
+<h2>Two things still owed</h2>
+<ol>
+<li><strong>Live verification of the caching fix</strong> — proving <code>cache_read_input_tokens</code> actually climbs turn-over-turn needs a fresh recorded interview (the mock replay can't show cache behavior). Whenever you want, I'll walk the <code>npm run cli -- --record</code> flow.</li>
+<li><strong>Phase 3 polish</strong> (untouched): unthemed export modal, always-visible DEBUG inspector, duplicated sessions-rail entries + dead click handler, no layout min-width.</li>
+</ol>
+<p>All of this is captured in memory so it survives to next session. Want me to merge the branch to main or push it, or leave it as-is for you to review?</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-002.html#msg-2026-07-03T23-12-28-910Z"><div class="index-item-header"><span class="index-item-number">#10</span><time datetime="2026-07-03T23:12:28.910Z" data-timestamp="2026-07-03T23:12:28.910Z">2026-07-03T23:12:28.910Z</time></div><div class="index-item-content"><p>commit DESIGN_RATIONALE I updated that</p></div></a><div class="index-item-stats"><span>1 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>The working tree is clean — there's nothing new to commit. Your <code>DESIGN_RATIONALE.md</code> edits are already committed in <code>22df748</code> ("Note the audit step and follow-ups in the design rationale"), which I made at the end of the last turn. That commit captured exactly the changes you'd made (the audit-step bullet, the direct-edits and productionization follow-ups).</p>
+<p>If you've edited it again since, the change isn't showing up — <code>git diff</code> is empty, so either it's not saved yet or it's identical to what's committed. Save the file and I'll re-check; otherwise you're all set.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-03T23-13-00-457Z"><div class="index-item-header"><span class="index-item-number">#11</span><time datetime="2026-07-03T23:13:00.457Z" data-timestamp="2026-07-03T23:13:00.457Z">2026-07-03T23:13:00.457Z</time></div><div class="index-item-content"><p>looks like youre still on a branch, merge into main</p></div></a><div class="index-item-stats"><span>2 bash</span>
+<div class="index-item-long-text"><div class="truncatable"><div class="truncatable-content"><div class="index-item-long-text-content"><p>Done. Merged into <code>main</code> via fast-forward (no merge commit), deleted the branch, and confirmed <strong>253 tests green</strong> on main.</p>
+<p><code>main</code> now contains all the audit work:
+- <code>a855141</code> — Sonnet 5 @ medium effort, state-derived event ids, null-tolerant <code>interact</code> quickReplies
+- <code>ddb1340</code> — chat UX: friendly bubble text, auto-scroll, proposal overflow fix
+- <code>22df748</code> — design-rationale notes</p>
+<p><code>main</code> is <strong>4 commits ahead of <code>origin/main</code></strong> and not pushed — I left pushing to you since you didn't ask. Say the word if you want me to push, and the live re-record to verify cache hits is still available whenever you're ready.</p></div></div><button class="expand-btn">Show more</button></div></div>
+</div></div>
+<div class="index-item"><a href="page-003.html#msg-2026-07-03T23-13-40-761Z"><div class="index-item-header"><span class="index-item-number">#12</span><time datetime="2026-07-03T23:13:40.761Z" data-timestamp="2026-07-03T23:13:40.761Z">2026-07-03T23:13:40.761Z</time></div><div class="index-item-content"><p>go ahead</p></div></a><div class="index-item-stats"><span>1 bash</span>
 </div></div>
         
 
@@ -22065,6 +22108,7 @@ Compose the export modal as one themed surface; gate the debug inspector; de-dup
 <span class="disabled">&larr; Prev</span>
 <a href="page-001.html">1</a>
 <a href="page-002.html">2</a>
+<a href="page-003.html">3</a>
 <a href="page-001.html">Next &rarr;</a>
 </div>
 
@@ -22084,7 +22128,7 @@ Compose the export modal as one themed surface; gate the debug inspector; de-dup
         </dialog>
         <script>
 (function() {
-    var totalPages = 2;
+    var totalPages = 3;
     var searchBox = document.getElementById('search-box');
     var searchInput = document.getElementById('search-input');
     var searchBtn = document.getElementById('search-btn');
