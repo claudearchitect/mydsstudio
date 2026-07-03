@@ -42,6 +42,25 @@ describe("validateTurnToolCalls", () => {
     expect(result.reason).toMatch(/interact\/export_design_md/);
   });
 
+  it("accepts an ask whose quickReplies is null and coerces it to [] (Sonnet-5 emits null for a chip-less question)", () => {
+    const content = [
+      toolUseBlock({ id: "tu_1", name: TOOL_NAMES.updateBeliefs, input: { patch: EMPTY_TOKEN_PATCH } }),
+      toolUseBlock({
+        id: "tu_2",
+        name: TOOL_NAMES.interact,
+        input: { mode: "ask", question: "what are you building?", quickReplies: null },
+      }),
+    ];
+    const result = validateTurnToolCalls(content);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.interact?.interaction).toEqual({
+      mode: "ask",
+      question: "what are you building?",
+      quickReplies: [],
+    });
+  });
+
   it("rejects a turn with only interact (missing update_beliefs)", () => {
     const content = [toolUseBlock({ id: "tu_1", name: TOOL_NAMES.interact, input: ASK_INPUT })];
     const result = validateTurnToolCalls(content);

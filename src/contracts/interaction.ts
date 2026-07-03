@@ -19,7 +19,15 @@ export type QuickReply = z.infer<typeof QuickReplySchema>;
 export const AskInteractionSchema = z.object({
   mode: z.literal("ask"),
   question: z.string(),
-  quickReplies: z.array(QuickReplySchema),
+  // Coerce a null/missing value to []. The `interact` tool runs non-strict
+  // (its flattened union schema trips Anthropic's strict-mode grammar limit —
+  // see toJsonSchema.ts), so the model isn't grammar-constrained here and some
+  // models emit `quickReplies: null` for a chip-less question rather than [].
+  // Without this, that null fails validation and burns the turn + its one
+  // corrective retry. A real (non-null) value still validates normally, so a
+  // genuinely malformed array is unaffected. z.toJSONSchema still emits a plain
+  // `array` schema, so the model's guidance is unchanged.
+  quickReplies: z.preprocess((v) => (v == null ? [] : v), z.array(QuickReplySchema)),
 });
 export type AskInteraction = z.infer<typeof AskInteractionSchema>;
 

@@ -325,7 +325,7 @@ describe("runTurn — request shape sent to the client", () => {
     expect(params.model).toBe("claude-sonnet-5");
     expect(params.max_tokens).toBe(16000);
     expect(params.thinking).toEqual({ type: "adaptive" });
-    expect(params.output_config).toEqual({ effort: "high" });
+    expect(params.output_config).toEqual({ effort: "medium" });
     expect(params).not.toHaveProperty("temperature");
     expect(params).not.toHaveProperty("top_p");
     expect(params).not.toHaveProperty("top_k");

@@ -33,7 +33,7 @@ These are enforced across the codebase — violating one is a bug, not a style c
 
 ## Claude API rules (model `claude-sonnet-5`)
 
-- Use adaptive thinking: `thinking: {type: "adaptive"}` and `output_config: {effort: "high"}`.
+- Use adaptive thinking: `thinking: {type: "adaptive"}` and `output_config: {effort: "medium"}` (medium keeps token spend down for the one-decision-per-turn interview loop).
 - **Do NOT send `temperature`, `top_p`, `top_k`, or `budget_tokens`** — non-default sampling params and `budget_tokens` return HTTP 400 on this model.
 - Tool schemas: `strict: true`, `additionalProperties: false`, and `required` listing every field. Malformed tool input must be impossible because the patch is machine-applied.
 - Prompt caching: the system prompt must be **byte-identical every turn** (zero interpolated values) with `cache_control: {type: "ephemeral"}` on the last system block; second breakpoint on the last content block of the newest message. Serialize tools deterministically. Verify with `usage.cache_read_input_tokens` (should be > 0 from turn 2).

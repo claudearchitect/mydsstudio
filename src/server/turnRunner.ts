@@ -195,7 +195,10 @@ async function attemptTurn(params: {
       model: MODEL,
       max_tokens: MAX_TOKENS,
       thinking: { type: "adaptive" },
-      output_config: { effort: "high" },
+      // `medium` trades some depth for lower token spend — a good fit for this
+      // one-question-per-turn interview loop, where each turn is a small,
+      // well-scoped decision rather than long-horizon reasoning.
+      output_config: { effort: "medium" },
       system,
       messages,
       tools,
