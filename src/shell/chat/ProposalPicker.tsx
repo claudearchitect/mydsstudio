@@ -25,6 +25,7 @@ import {
   parseTokenRef,
   resolveTokens,
   renderComponentPlaceholder,
+  COMPONENT_MANIFEST,
   type BeliefState,
   type ProposeInteraction,
   type ProposalVariant,
@@ -35,6 +36,27 @@ import {
 /** Confidence forced onto a proposal target's dependency groups for the
  * picker's display render only (never written to real state). */
 const SHARP_DISPLAY_CONFIDENCE = 0.95;
+
+/**
+ * Resolve a proposal's `target` to a real componentId. The interaction schema
+ * intends `target` to be an exact componentId, but the live model sometimes
+ * fills it with a free-text description ("Card + button + input on the
+ * dashboard") rather than an id — which would render "Unknown component".
+ * Map it back: exact id → manifest label → keyword mention → safe default, so
+ * a proposal always renders a real component the variant patch visibly styles.
+ */
+function resolveComponentId(raw: string): string {
+  if (COMPONENT_MANIFEST.some((e) => e.componentId === raw)) return raw;
+  const lower = raw.toLowerCase();
+  const byLabel = COMPONENT_MANIFEST.find((e) => e.label.toLowerCase() === lower);
+  if (byLabel) return byLabel.componentId;
+  const byKeyword = COMPONENT_MANIFEST.find((e) => {
+    const family = e.componentId.split(".")[0]; // button, card, input, heading, badge, nav
+    const labelWord = e.label.toLowerCase().split(" ").pop() ?? "";
+    return lower.includes(family) || (labelWord.length > 2 && lower.includes(labelWord));
+  });
+  return byKeyword?.componentId ?? "button.primary";
+}
 
 /**
  * Display-only transform: raise the target component's dependency groups to
@@ -83,16 +105,19 @@ export function ProposalPicker({
   // applyPatch's eventId is only used for provenance stamping on the
   // scratch copy discarded after this render (contracts/applyPatch.ts:
   // "caller owns event-id generation and event-log appends").
+  // The model's `target` may be prose, not a componentId — resolve it to a
+  // real component so the variants always render (see resolveComponentId).
+  const target = resolveComponentId(interaction.target);
   const variantStates = useMemo(
     () =>
       interaction.variants.map((variant) => ({
         variant,
         previewState: sharpenForTarget(
           applyPatch(state, variant.patch, `preview-${variant.id}`),
-          interaction.target,
+          target,
         ),
       })),
-    [state, interaction.variants],
+    [state, interaction.variants, target],
   );
 
   return (
@@ -117,7 +142,7 @@ export function ProposalPicker({
               className="ds-preview-root flex w-full items-center justify-center rounded-app-sm p-2"
               style={resolveTokens(previewState) as CSSProperties}
             >
-              {renderComponent(previewState, interaction.target)}
+              {renderComponent(previewState, target)}
             </div>
             <span className="text-xs font-medium" style={{ color: "#2b2a26" }}>
               {variant.caption}

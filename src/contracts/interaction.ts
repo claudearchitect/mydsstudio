@@ -39,7 +39,13 @@ export const ProposeInteractionSchema = z.object({
   /** dotted token ref(s) this proposal is probing, e.g. "shape.radius" */
   axis: z.array(z.string()),
   /** componentId from the component manifest that variants render against */
-  target: z.string(),
+  target: z
+    .string()
+    .describe(
+      'The exact componentId the variants render against — MUST be one of: ' +
+        '"button.primary", "card.default", "input.text", "heading.default", ' +
+        '"badge.default", "nav.default". A single id, never a description or a list.',
+    ),
   caption: z.string(),
   variants: z.array(ProposalVariantSchema).min(2).max(4),
 });
