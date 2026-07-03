@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/*
+ * Shell theme tokens — `--app-*` namespace (V0_PLAN.md "Studio shell
+ * design"). Fixed, defined once, here only. Two-namespace rule
+ * (non-negotiable): nothing inside the preview subtree reads `--app-*`;
+ * nothing in the shell reads `--ds-*` (belief-state tokens, defined by
+ * Workstream A's resolver — see src/contracts/resolveTokens.ts). Values are
+ * eyeballed from the Claude desktop app per the plan; implementers may
+ * fine-tune but must stay in this family.
+ */
+:root {
+  --app-bg: #262624;
+  --app-bg-deep: #1f1e1c;
+  --app-bg-raised: #30302e;
+  --app-bg-input: #393937;
+
+  --app-text: #f5f4ef;
+  --app-text-secondary: #b8b5a9;
+  --app-text-muted: #8a887d;
+
+  --app-border: #3d3c38;
+
+  --app-accent: #d97757;
+  --app-accent-hover: #c96442;
+  --app-link: #6b9bd2;
+  --app-positive: #77a75f;
+  --app-negative: #d2604f;
+
+  --app-radius-sm: 6px;
+  --app-radius-md: 10px;
+  --app-radius-lg: 14px;
+  --app-radius-pill: 9999px;
+
+  /* Preview artifact frame — "light artifact" surface (rule 2: dark chrome,
+   * light artifact). Not part of the `--ds-*` namespace; this is the paper
+   * the belief-state render sits on, owned by the shell. */
+  --app-paper: #faf9f5;
+}
+
+@theme inline {
+  --color-app-bg: var(--app-bg);
+  --color-app-bg-deep: var(--app-bg-deep);
+  --color-app-bg-raised: var(--app-bg-raised);
+  --color-app-bg-input: var(--app-bg-input);
+
+  --color-app-text: var(--app-text);
+  --color-app-text-secondary: var(--app-text-secondary);
+  --color-app-text-muted: var(--app-text-muted);
+
+  --color-app-border: var(--app-border);
+
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-link: var(--app-link);
+  --color-app-positive: var(--app-positive);
+  --color-app-negative: var(--app-negative);
+
+  --color-app-paper: var(--app-paper);
+
+  --radius-app-sm: var(--app-radius-sm);
+  --radius-app-md: var(--app-radius-md);
+  --radius-app-lg: var(--app-radius-lg);
+  --radius-app-pill: var(--app-radius-pill);
+
+  --font-sans: ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+/*
+ * Preview container: scopes Tailwind's preflight/base styles away from the
+ * belief-state render (V0_PLAN.md stack table: "Scope Tailwind's
+ * preflight/base styles away from the preview container"). Workstream A's
+ * exemplar components live inside this boundary and must style themselves
+ * only from `--ds-*` custom properties, never Tailwind utility classes.
+ */
+.ds-preview-root {
+  all: revert;
+  background: var(--app-paper);
+}
