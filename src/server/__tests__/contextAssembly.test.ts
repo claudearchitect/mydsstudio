@@ -72,7 +72,7 @@ describe("assembleContext", () => {
     expect(lastBlock.text).toContain(JSON.stringify(confidence04.meta.product));
   });
 
-  it("replays prior turns as assistant tool_use + user tool_result message pairs", () => {
+  it("replays prior turns as assistant tool_use + user tool_result message pairs, folded into the new turn's user message", () => {
     const ctx = assembleContext({
       beliefState: emptyBeliefState,
       latestUserText: "next turn",
@@ -86,16 +86,58 @@ describe("assembleContext", () => {
       ],
     });
 
-    // 1 assistant + 1 user (tool_result ack) + 1 user (new turn) = 3
-    expect(ctx.messages).toHaveLength(3);
+    // 1 assistant (tool_use pair) + 1 user (tool_result ack + new turn text,
+    // folded into a single message so roles strictly alternate — the
+    // Anthropic API 400s on two adjacent "user" messages) = 2
+    expect(ctx.messages).toHaveLength(2);
     expect(ctx.messages[0].role).toBe("assistant");
     const assistantContent = ctx.messages[0].content as Array<{ type: string; id: string; name: string }>;
     expect(assistantContent.map((b) => b.name)).toEqual(["update_beliefs", "interact"]);
     expect(assistantContent.map((b) => b.id)).toEqual(["tu_1", "tu_2"]);
 
     expect(ctx.messages[1].role).toBe("user");
-    const resultContent = ctx.messages[1].content as Array<{ type: string; tool_use_id: string }>;
-    expect(resultContent.map((b) => b.tool_use_id)).toEqual(["tu_1", "tu_2"]);
+    const userContent = ctx.messages[1].content as Array<{ type: string; tool_use_id?: string; text?: string }>;
+    const resultBlocks = userContent.filter((b) => b.type === "tool_result");
+    expect(resultBlocks.map((b) => b.tool_use_id)).toEqual(["tu_1", "tu_2"]);
+    const textBlocks = userContent.filter((b) => b.type === "text");
+    expect(textBlocks).toHaveLength(1);
+    expect(textBlocks[0].text).toContain("next turn");
+  });
+
+  it("roles strictly alternate across multiple prior turns (no two adjacent same-role messages)", () => {
+    const ctx = assembleContext({
+      beliefState: emptyBeliefState,
+      latestUserText: "turn three text",
+      priorTurns: [
+        {
+          updateBeliefsInput: { meta: {}, tokens: [], confidence: [], rationale: [] },
+          interactInput: { mode: "ask", question: "q1?", quickReplies: [] },
+          updateBeliefsToolUseId: "tu_1",
+          interactToolUseId: "tu_2",
+        },
+        {
+          updateBeliefsInput: { meta: {}, tokens: [], confidence: [], rationale: [] },
+          interactInput: { mode: "ask", question: "q2?", quickReplies: [] },
+          updateBeliefsToolUseId: "tu_3",
+          interactToolUseId: "tu_4",
+        },
+      ],
+    });
+
+    // assistant, user(ack1), assistant, user(ack2 + new turn text) = 4
+    expect(ctx.messages).toHaveLength(4);
+    const roles = ctx.messages.map((m) => m.role);
+    expect(roles).toEqual(["assistant", "user", "assistant", "user"]);
+    for (let i = 1; i < roles.length; i++) {
+      expect(roles[i]).not.toBe(roles[i - 1]);
+    }
+
+    const lastContent = ctx.messages[3].content as Array<{ type: string; tool_use_id?: string; text?: string }>;
+    const resultBlocks = lastContent.filter((b) => b.type === "tool_result");
+    expect(resultBlocks.map((b) => b.tool_use_id)).toEqual(["tu_3", "tu_4"]);
+    const textBlocks = lastContent.filter((b) => b.type === "text");
+    expect(textBlocks).toHaveLength(1);
+    expect(textBlocks[0].text).toContain("turn three text");
   });
 
   it("summarizes the event log tail when the log exceeds the verbatim threshold", () => {

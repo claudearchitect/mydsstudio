@@ -77,7 +77,17 @@ export function assembleContext(input: AssembleContextInput): AssembledContext {
   // pairs so the model sees its own history exactly as it produced it,
   // rather than re-summarizing prior turns into prose (which would both
   // lose information and break the cached prefix every time).
-  for (const turn of priorTurns) {
+  //
+  // The Anthropic API requires messages to strictly alternate user/assistant
+  // — it does not merge consecutive same-role messages itself, and (per
+  // AGENTS.md / the live-API gate) sending two adjacent `user` messages
+  // produces a 400 ("tool_use ids were found without tool_result blocks
+  // immediately after"), because the API's tool_result matching only looks
+  // at the very next message. So the last prior turn's tool_result ack and
+  // this turn's payload text must be collapsed into ONE user message, not
+  // two — only the tool_result blocks from turns before the last one get
+  // their own dedicated user message.
+  for (const [index, turn] of priorTurns.entries()) {
     messages.push({
       role: "assistant",
       content: [
@@ -95,35 +105,54 @@ export function assembleContext(input: AssembleContextInput): AssembledContext {
         },
       ],
     });
+
+    const toolResultBlocks: Anthropic.ToolResultBlockParam[] = [
+      {
+        type: "tool_result",
+        tool_use_id: turn.updateBeliefsToolUseId,
+        content: "applied",
+      },
+      {
+        type: "tool_result",
+        tool_use_id: turn.interactToolUseId,
+        content: "delivered to user",
+      },
+    ];
+
+    const isLastPriorTurn = index === priorTurns.length - 1;
+    if (!isLastPriorTurn) {
+      messages.push({ role: "user", content: toolResultBlocks });
+    } else {
+      // Fold the final ack together with this turn's payload text so the
+      // two adjacent "user" contributions form a single API message.
+      const turnPayload = buildTurnPayloadText(beliefState, latestUserText);
+      messages.push({
+        role: "user",
+        content: [
+          ...toolResultBlocks,
+          {
+            type: "text",
+            text: turnPayload,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+      });
+    }
+  }
+
+  if (priorTurns.length === 0) {
+    const turnPayload = buildTurnPayloadText(beliefState, latestUserText);
     messages.push({
       role: "user",
       content: [
         {
-          type: "tool_result",
-          tool_use_id: turn.updateBeliefsToolUseId,
-          content: "applied",
-        },
-        {
-          type: "tool_result",
-          tool_use_id: turn.interactToolUseId,
-          content: "delivered to user",
+          type: "text",
+          text: turnPayload,
+          cache_control: { type: "ephemeral" },
         },
       ],
     });
   }
-
-  const turnPayload = buildTurnPayloadText(beliefState, latestUserText);
-
-  messages.push({
-    role: "user",
-    content: [
-      {
-        type: "text",
-        text: turnPayload,
-        cache_control: { type: "ephemeral" },
-      },
-    ],
-  });
 
   return { system, messages };
 }
