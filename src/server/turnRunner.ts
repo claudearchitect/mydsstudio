@@ -280,6 +280,7 @@ function finalizeSuccessfulTurn(params: {
     beliefState: finalState,
     interaction: interactionForWire,
     usage: turnUsage,
+    patch: toolCalls.updateBeliefs.patch,
   });
 
   const priorTurnRecord: PriorTurnRecord | undefined = toolCalls.interact

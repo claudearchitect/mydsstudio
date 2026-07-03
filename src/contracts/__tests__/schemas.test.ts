@@ -160,6 +160,7 @@ describe("Turn wire format", () => {
           cacheReadInputTokens: 0,
           cacheCreationInputTokens: 100,
         },
+        patch: EMPTY_TOKEN_PATCH,
       },
     ];
 

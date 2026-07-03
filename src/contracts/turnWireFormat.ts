@@ -23,6 +23,7 @@
 import { z } from "zod";
 import { BeliefStateSchema } from "./beliefState";
 import { InteractionSchema } from "./interaction";
+import { TokenPatchSchema } from "./tokenPatch";
 
 export const TurnDeltaEventSchema = z.object({
   type: z.literal("delta"),
@@ -48,6 +49,22 @@ export const TurnFinalEventSchema = z.object({
   beliefState: BeliefStateSchema,
   interaction: InteractionSchema,
   usage: TurnUsageSchema,
+  /**
+   * The raw `update_beliefs` patch the model emitted this turn (may be
+   * empty — "no belief change this turn" is valid, see EMPTY_TOKEN_PATCH).
+   * Added in Phase 2 (V0_PLAN.md "Integration + polish": wiring B's real
+   * turn agent) once it became clear a stateless-per-request `/api/turn`
+   * (no server-side session) requires the *client* to reconstruct each
+   * `PriorTurnRecord` for the next request's context replay
+   * (src/server/contextAssembly.ts replays the assistant's own prior
+   * tool_use content verbatim so the model sees its own history exactly as
+   * it produced it). Without the raw patch on the wire, only the merged
+   * `beliefState` is available client-side, which cannot be reversed into
+   * the exact patch the model called (multiple patches can merge to the
+   * same state). Additive field, non-breaking: existing consumers that only
+   * read `beliefState`/`interaction`/`usage` are unaffected.
+   */
+  patch: TokenPatchSchema,
 });
 export type TurnFinalEvent = z.infer<typeof TurnFinalEventSchema>;
 
