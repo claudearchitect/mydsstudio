@@ -98,12 +98,34 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
     // One corrective retry: replay the same context plus the assistant's
     // invalid tool calls (so it can see what it did wrong) plus a user
     // turn naming the violation, then try once more.
+    //
+    // The Anthropic API requires every tool_use block in an assistant
+    // message to be immediately followed, in the very next message, by a
+    // matching tool_result block — a plain-text-only user turn after an
+    // assistant message containing tool_use blocks is rejected with a 400
+    // ("tool_use ids were found without tool_result blocks immediately
+    // after"), discovered live on the very first protocol-violation retry.
+    // Emit an error tool_result for each tool_use block the assistant
+    // produced (there's nothing to "apply" — the turn was rejected) ahead
+    // of the corrective-retry text, in the same user message.
+    const toolResultAcks: Anthropic.ToolResultBlockParam[] = attempt.rawContent
+      .filter((block): block is Anthropic.ToolUseBlock => block.type === "tool_use")
+      .map((block) => ({
+        type: "tool_result",
+        tool_use_id: block.id,
+        content: "Turn rejected: protocol violation — see the following message.",
+        is_error: true,
+      }));
+
     const retryMessages: Anthropic.MessageParam[] = [
       ...context.messages,
       { role: "assistant", content: attempt.rawContent },
       {
         role: "user",
-        content: [{ type: "text", text: buildCorrectiveRetryText(attempt.reason) }],
+        content: [
+          ...toolResultAcks,
+          { type: "text", text: buildCorrectiveRetryText(attempt.reason) },
+        ],
       },
     ];
 

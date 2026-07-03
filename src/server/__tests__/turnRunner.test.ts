@@ -150,6 +150,28 @@ describe("runTurn — protocol enforcement + retry", () => {
     });
     // No error event should have been emitted despite the first attempt's violation.
     expect(events.some((e) => e.type === "error")).toBe(false);
+
+    // The Anthropic API requires every tool_use block in an assistant
+    // message to be immediately followed by a matching tool_result in the
+    // very next message — a plain-text-only corrective retry message 400s
+    // live (discovered against the real API). Assert the retry call's
+    // messages include an error tool_result for the bad attempt's tool_use
+    // block, ahead of the corrective-retry text, in the same user message.
+    const retryCallMessages = calls[1].params.messages;
+    const retryUserMessage = retryCallMessages[retryCallMessages.length - 1];
+    expect(retryUserMessage.role).toBe("user");
+    const retryContent = retryUserMessage.content as Array<{
+      type: string;
+      tool_use_id?: string;
+      is_error?: boolean;
+    }>;
+    const errorAcks = retryContent.filter((b) => b.type === "tool_result");
+    expect(errorAcks).toHaveLength(1);
+    expect(errorAcks[0]).toMatchObject({ tool_use_id: "tu_ub", is_error: true });
+    expect(retryContent.some((b) => b.type === "text")).toBe(true);
+    // Roles must strictly alternate: the message before this one is the
+    // assistant's rejected attempt.
+    expect(retryCallMessages[retryCallMessages.length - 2].role).toBe("assistant");
   });
 
   it("emits a protocol_violation error after the retry also violates the protocol", async () => {
