@@ -162,6 +162,53 @@ describe("richer components still preserve data-component + reveal state", () =>
   });
 });
 
+describe("components stay shrinkable for the proposal picker's compact (~180px) cards", () => {
+  // The proposal picker (src/shell/chat/ProposalPicker.tsx) renders these
+  // same components inside a 2-column grid of ~180px cards. jsdom doesn't
+  // do real layout, so this can't assert final pixel widths — instead it
+  // asserts the *styling contract* that makes shrinking possible: the
+  // reveal wrapper must allow shrinking (maxWidth: 100%, not an unbounded
+  // inline-flex), and any component with a fixed "ideal" pixel width must
+  // cap it against 100% (via `min(<ideal>, 100%)` or an explicit maxWidth)
+  // rather than a bare px value that would overflow a narrow ancestor.
+  it("the reveal wrapper caps its own width at 100% so it can shrink inside a compact card", () => {
+    for (const entry of COMPONENT_MANIFEST) {
+      const el = mount(renderComponent(confidence095, entry.componentId));
+      const node = el.querySelector<HTMLElement>(
+        `[data-component="${entry.componentId}"]`,
+      );
+      expect(node?.style.maxWidth).toBe("100%");
+    }
+  });
+
+  it("card.default, input.text, and nav.default cap their fixed ideal width against 100% (min(px, 100%))", async () => {
+    // jsdom's CSSOM (cssstyle) doesn't parse the `min()` CSS function at
+    // all — assigning `style.width = "min(240px, 100%)"` is silently
+    // dropped, so `element.style.width` reads back empty either way and
+    // can't distinguish "capped" from "never set". Verified live in Chrome
+    // (see PR description / worktree verification) that the real browser
+    // renders these correctly at 180px. Asserting at the source level is
+    // the reliable way to guard the *contract* — every fixed-width
+    // component must express its width as `min(<px>, 100%)` rather than a
+    // bare px value that would overflow the proposal picker's compact
+    // card.
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const dir = path.join(__dirname, "..", "components");
+    const files: Record<string, string> = {
+      "card.default": "CardDefault.tsx",
+      "input.text": "InputText.tsx",
+      "nav.default": "NavDefault.tsx",
+    };
+    for (const [componentId, file] of Object.entries(files)) {
+      const src = await fs.readFile(path.join(dir, file), "utf-8");
+      expect(src, `${componentId} (${file}) should cap its fixed width via min(px, 100%)`).toMatch(
+        /width:\s*"min\(\d+px,\s*100%\)"/,
+      );
+    }
+  });
+});
+
 describe("visual proposals: a token patch visibly restyles the enriched components", () => {
   it("button.primary's rendered background reflects the resolved --ds-color-primary value", () => {
     const el = mount(renderComponent(confidence095, "button.primary"));

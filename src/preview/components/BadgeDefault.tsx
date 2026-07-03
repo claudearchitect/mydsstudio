@@ -12,9 +12,11 @@ export function BadgeDefault() {
     <div
       style={{
         display: "inline-flex",
+        flexWrap: "wrap",
         alignItems: "center",
         gap: "calc(var(--ds-spacing-inset, 12px) * 0.5)",
         fontFamily: "inherit",
+        maxWidth: "100%",
       }}
     >
       <span

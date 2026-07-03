@@ -16,12 +16,14 @@ export function InputText() {
         display: "flex",
         flexDirection: "column",
         gap: "calc(var(--ds-spacing-inset, 12px) * 0.4)",
-        width: 220,
+        width: "min(220px, 100%)",
         fontFamily: "inherit",
       }}
     >
       <style>{`
         .ds-input-text {
+          border: 1px solid var(--ds-color-border, #dedcd3);
+          box-shadow: none;
           transition: border-color 120ms ease, box-shadow 120ms ease;
         }
         .ds-input-text:focus {
@@ -48,7 +50,6 @@ export function InputText() {
         style={{
           display: "block",
           width: "100%",
-          border: "1px solid var(--ds-color-border, #dedcd3)",
           background: "var(--ds-color-surface, #ffffff)",
           color: "var(--ds-color-text, #2b2a26)",
           borderRadius: "var(--ds-shape-radius, 6px)",

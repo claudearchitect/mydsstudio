@@ -18,7 +18,7 @@ export function CardDefault() {
         borderRadius: "var(--ds-shape-radius, 6px)",
         boxShadow: "var(--ds-elevation-card, 0 1px 2px rgba(0,0,0,0.08))",
         padding: "var(--ds-spacing-inset, 12px)",
-        width: 240,
+        width: "min(240px, 100%)",
         display: "flex",
         flexDirection: "column",
         gap: "calc(var(--ds-spacing-inset, 12px) * 0.75)",

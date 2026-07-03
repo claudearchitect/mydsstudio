@@ -5,17 +5,24 @@
  *
  * Real top nav bar: a brand mark + wordmark on the left, a few nav links
  * in the middle, and a primary action button on the right — the shape of
- * an actual product header, not three floating labels.
+ * an actual product header, not three floating labels. `flexWrap: wrap`
+ * plus `maxWidth: 100%` let the link cluster drop to a second row instead
+ * of overflowing when this renders inside the proposal picker's ~180px
+ * compact card — the full nav bar shows in the main preview panel where
+ * there's room, and still reads as a real nav (not clipped) at small size.
  */
 export function NavDefault() {
   return (
     <nav
       style={{
         display: "flex",
+        flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: "var(--ds-spacing-inset, 12px)",
-        width: 320,
+        rowGap: "calc(var(--ds-spacing-inset, 12px) * 0.5)",
+        columnGap: "var(--ds-spacing-inset, 12px)",
+        width: "min(320px, 100%)",
+        boxSizing: "border-box",
         background: "var(--ds-color-surface, #ffffff)",
         border: "1px solid var(--ds-color-border, #dedcd3)",
         borderRadius: "var(--ds-shape-radius, 6px)",
@@ -23,7 +30,6 @@ export function NavDefault() {
           "calc(var(--ds-spacing-inset, 12px) * 0.6) var(--ds-spacing-inset, 12px)",
         color: "var(--ds-color-text, #2b2a26)",
         fontFamily: "inherit",
-        boxSizing: "border-box",
       }}
     >
       <div
@@ -60,6 +66,7 @@ export function NavDefault() {
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap",
           alignItems: "center",
           gap: "calc(var(--ds-spacing-inset, 12px) * 0.75)",
         }}
@@ -69,6 +76,7 @@ export function NavDefault() {
             fontSize: "var(--ds-typography-label, 13px)",
             fontWeight: "var(--ds-typography-label-weight, 500)",
             color: "var(--ds-color-primary, #2b2a26)",
+            whiteSpace: "nowrap",
           }}
         >
           Book
@@ -78,6 +86,7 @@ export function NavDefault() {
             fontSize: "var(--ds-typography-label, 13px)",
             fontWeight: "var(--ds-typography-label-weight, 500)",
             opacity: 0.55,
+            whiteSpace: "nowrap",
           }}
         >
           Groomers
@@ -87,6 +96,7 @@ export function NavDefault() {
             fontSize: "var(--ds-typography-label, 13px)",
             fontWeight: "var(--ds-typography-label-weight, 500)",
             opacity: 0.55,
+            whiteSpace: "nowrap",
           }}
         >
           Account

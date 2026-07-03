@@ -86,6 +86,7 @@ export const renderComponent: RenderComponent = (state, componentId) => {
       data-reveal={reveal}
       style={{
         display: "inline-flex",
+        maxWidth: "100%",
         filter: blurPx > 0 ? `blur(${blurPx}px)` : "none",
         opacity,
         transition: REVEAL_TRANSITION,
