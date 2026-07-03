@@ -37,7 +37,8 @@ Novelty: The visual interview approach that both provides suggestions in a visua
 
 - **Planning → phased build.** Concept → implementation architecture → V0 plan restructured for parallel agents.
 - **Multi-agent orchestration.** Phase 0 (contracts, serial) → 4 parallel workstreams (renderer / shell / server / export) → Phase 2 integration. This worked well, with one exception: when I created new agents in separate sessions, having another agent contribute to main confused the build orchestrator (I should have at least made those sessions work in a worktree). Once I dealt with this, I just had the main orchestrator spin up new subagents for any work I wanted to happen in parallel.
-- **Feedback-driven polish loops.** Several rounds of "make it actually visual".
+- **Feedback-driven polish loops.** Several rounds of polish providing feedback to the model for things that needed fixes as we test / validate the app.
+- **Audit step.** Asking Fable to do an audit and look for bugs in the app, create a plan for fixes and delegate to Opus to fix.
 
 ---
 
@@ -53,9 +54,11 @@ Novelty: The visual interview approach that both provides suggestions in a visua
 ## 5. What I'd do next
 
 - **Lead fast-follow:** Feature - a "vary again / go bolder" control to regenerate proposal variants along an axis — turning _pick-from-a-batch_ into _drive-the-exploration_.
+- **More direct edits:** Allow users to directly edit more parts of the design system, border radius, padding, colors, etc. These still go through the agent as "user selections / edits" so the agent can update scores, but it gives the user more direct control to express their desired design system without having to type up what they mean.
 - **Tune the API calls.** The server is stateless, so the loop resends the full history every turn. Caching breakpoints are already in place to keep that cheap, but I want to confirm cache hits actually hold up in prod as sessions get long — and eventually summarize old turns into the belief state instead of resending everything forever.
 - **Improve the schema.** Extend the schema so it covers more of the design-token spec.
 - **Improve the agent / architecture.** Currently the agent asks a lot of questions, sometimes being a bit too careful when scoring / building its confidence. I'd add different interview strategies: let it take leaps of faith and confirm ("here's what I think you want — is this right?") instead of always asking, so it can make bigger jumps in its understanding.
+- **Productionization** Productionization tasks such as agent audits, user limits, user auth, responsive layout, etc.
 
 ---
 
