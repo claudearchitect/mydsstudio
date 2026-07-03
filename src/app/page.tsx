@@ -1,14 +1,13 @@
-import { StudioShell } from "@/shell/StudioShell";
-import { FixtureSwitcher } from "@/preview/FixtureSwitcher";
+import { Session } from "@/shell/Session";
 
 /**
- * Phase 0/A wiring note: mounts Workstream A's FixtureSwitcher into the
- * shell's previewSlot so the reveal-state gate is visually checkable in a
- * real browser ahead of Workstream B's real preview-pane chrome (header,
- * controls bar, region-select). B/Phase-2 integration will replace this
- * composition with the full interaction shell; this file is not owned by
- * any single workstream's directory, so keep this wiring minimal.
+ * App entry: Workstream B's full two-pane interaction shell.
+ *
+ * In this phase Session is driven by the fake-agent turn adapter; Phase 2
+ * wires it to Workstream C's /api/turn and mounts Workstream A's PreviewPanel
+ * into the preview slot. Workstream A's dev FixtureSwitcher (@/preview/
+ * FixtureSwitcher) stays available for manually exercising reveal states.
  */
 export default function Home() {
-  return <StudioShell previewSlot={<FixtureSwitcher />} />;
+  return <Session />;
 }
