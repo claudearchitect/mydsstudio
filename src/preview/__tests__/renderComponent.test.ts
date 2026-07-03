@@ -9,9 +9,11 @@ import { act } from "react";
 import { COMPONENT_MANIFEST } from "@/contracts";
 import { COMPONENT_REGISTRY } from "../components";
 import { renderComponent } from "../renderComponent";
+import { resolveTokens } from "@/contracts";
 import {
   emptyBeliefState,
   confidence01,
+  confidence04,
   confidence095,
 } from "@fixtures/beliefStates";
 
@@ -75,5 +77,126 @@ describe("renderComponent", () => {
   it("mounts the actual exemplar element inside a sharp/blurred wrapper", () => {
     const el = mount(renderComponent(confidence095, "heading.default"));
     expect(el.querySelector("h2")).not.toBeNull();
+  });
+});
+
+describe("enriched exemplar components read as real UI (not gray boxes)", () => {
+  it("button.primary renders real button chrome: two buttons, real labels, no placeholder text", () => {
+    const el = mount(renderComponent(confidence095, "button.primary"));
+    const buttons = el.querySelectorAll("button");
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    const labels = Array.from(buttons).map((b) => b.textContent);
+    expect(labels.some((t) => /book/i.test(t ?? ""))).toBe(true);
+    expect(el.textContent).not.toMatch(/^button\.primary$/i);
+  });
+
+  it("card.default renders a heading, body copy, and an action button", () => {
+    const el = mount(renderComponent(confidence095, "card.default"));
+    expect(el.querySelector("button")).not.toBeNull();
+    // real body copy, not a placeholder gray bar (no text content)
+    const paragraph = el.querySelector("p");
+    expect(paragraph?.textContent?.length ?? 0).toBeGreaterThan(10);
+  });
+
+  it("input.text renders a real labeled field with a placeholder", () => {
+    const el = mount(renderComponent(confidence095, "input.text"));
+    const label = el.querySelector("label");
+    const input = el.querySelector("input[type='text']");
+    expect(label).not.toBeNull();
+    expect(label?.textContent?.length ?? 0).toBeGreaterThan(0);
+    expect(input?.getAttribute("placeholder")).toBeTruthy();
+  });
+
+  it("badge.default renders a realistic pill label, not generic 'New'", () => {
+    const el = mount(renderComponent(confidence095, "badge.default"));
+    expect(el.textContent).toMatch(/available/i);
+  });
+
+  it("nav.default renders a brand and multiple links plus an action", () => {
+    const el = mount(renderComponent(confidence095, "nav.default"));
+    const nav = el.querySelector("nav");
+    expect(nav).not.toBeNull();
+    expect(nav?.querySelector("button")).not.toBeNull();
+    expect(el.textContent).toMatch(/book/i);
+  });
+
+  it("heading.default renders a heading paired with supporting body copy", () => {
+    const el = mount(renderComponent(confidence095, "heading.default"));
+    expect(el.querySelector("h2")).not.toBeNull();
+    expect(el.querySelector("p")).not.toBeNull();
+  });
+});
+
+describe("richer components still preserve data-component + reveal state", () => {
+  it("preserves data-component on the root for every manifest entry at 0.4 (blurred) confidence", () => {
+    for (const entry of COMPONENT_MANIFEST) {
+      const el = mount(renderComponent(confidence04, entry.componentId));
+      const node = el.querySelector(`[data-component="${entry.componentId}"]`);
+      expect(node).not.toBeNull();
+    }
+  });
+
+  it("applies blur filter + reduced opacity to the wrapper without breaking internal layout at blurred reveal", () => {
+    // heading.default depends only on color + typography, both touched
+    // (below sharp threshold) at the 0.4 fixture, so it lands in
+    // "blurred" rather than "absent" — see revealState.test.ts's note on
+    // why 0.4 is deliberately constructed this way.
+    const el = mount(renderComponent(confidence04, "heading.default"));
+    const node = el.querySelector<HTMLElement>('[data-component="heading.default"]');
+    expect(node?.getAttribute("data-reveal")).toBe("blurred");
+    expect(node?.style.filter).toMatch(/blur\(/);
+    expect(Number(node?.style.opacity)).toBeLessThan(1);
+    // internal structure (heading + supporting body copy) still mounts
+    // under blur — a blurred heading should still read as a soft type
+    // specimen, not an empty node.
+    expect(node?.querySelector("h2")).not.toBeNull();
+    expect(node?.querySelector("p")).not.toBeNull();
+  });
+
+  it("sharp reveal has no blur/opacity dampening applied to richer markup", () => {
+    const el = mount(renderComponent(confidence095, "nav.default"));
+    const node = el.querySelector<HTMLElement>('[data-component="nav.default"]');
+    expect(node?.getAttribute("data-reveal")).toBe("sharp");
+    expect(node?.style.filter === "" || node?.style.filter === "none").toBe(true);
+    expect(node?.style.opacity === "" || Number(node?.style.opacity) === 1).toBe(true);
+  });
+});
+
+describe("visual proposals: a token patch visibly restyles the enriched components", () => {
+  it("button.primary's rendered background reflects the resolved --ds-color-primary value", () => {
+    const el = mount(renderComponent(confidence095, "button.primary"));
+    const resolved = resolveTokens(confidence095);
+    const primaryButton = el.querySelector("button");
+    // jsdom doesn't resolve CSS custom properties in computed style, but the
+    // inline style attribute must reference the token var (not a hardcoded
+    // literal) so a runtime token-var change on the ancestor restyles it.
+    expect(primaryButton?.style.background).toContain("--ds-color-primary");
+    expect(resolved["--ds-color-primary"]).toBe("#5b7f5e");
+  });
+
+  it("changing shape.radius in the belief state changes the resolved --ds-shape-radius the card references", () => {
+    const mutated = {
+      ...confidence095,
+      groups: {
+        ...confidence095.groups,
+        shape: {
+          ...confidence095.groups.shape!,
+          tokens: {
+            ...confidence095.groups.shape!.tokens,
+            radius: { $value: "2px", $type: "dimension" as const, provenance: ["e99"] },
+          },
+        },
+      },
+    };
+    const before = resolveTokens(confidence095);
+    const after = resolveTokens(mutated);
+    expect(before["--ds-shape-radius"]).toBe("10px");
+    expect(after["--ds-shape-radius"]).toBe("2px");
+
+    const el = mount(renderComponent(mutated, "card.default"));
+    const card = el.querySelector<HTMLElement>('[data-component="card.default"]');
+    expect(card?.querySelector("div")?.style.borderRadius).toContain(
+      "--ds-shape-radius",
+    );
   });
 });
