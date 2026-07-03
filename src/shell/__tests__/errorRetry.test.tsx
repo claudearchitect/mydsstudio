@@ -27,7 +27,7 @@ const oneTurnScript: FakeAgentScript = {
 };
 
 function Harness({ agent }: { agent: FakeTurnAgent }) {
-  const session = useSession({ agent, disablePersistence: true });
+  const session = useSession({ agent, storageMode: "demo", disablePersistence: true });
   return (
     <ChatPanel
       transcript={session.transcript}

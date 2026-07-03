@@ -24,10 +24,15 @@ import {
   nextTranscriptId,
   type TranscriptEntry,
 } from "../state/transcript";
-import { restoreSession, saveSession } from "../state/sessionStorage";
+import { restoreSession, saveSession, type SessionStorageMode } from "../state/sessionStorage";
 
 export interface UseSessionOptions {
   agent: TurnAgent;
+  /** Which mode this session's persistence is namespaced under ("live" vs
+   * "demo" — see sessionStorage.ts's header comment for why a shared key
+   * across modes was a bug: it let one mode's restored transcript get
+   * replayed into the other mode's turn source). */
+  storageMode: SessionStorageMode;
   /** Skip the localStorage restore attempt (useful in tests). */
   disablePersistence?: boolean;
   /** Automatically play the agent's kickoff turn on mount if there's no
@@ -57,6 +62,7 @@ export interface UseSessionResult {
 
 export function useSession({
   agent,
+  storageMode,
   disablePersistence,
   autoKickoff = true,
 }: UseSessionOptions): UseSessionResult {
@@ -182,16 +188,21 @@ export function useSession({
         setRestoredFromStorage(true);
         return;
       }
-      const restored = restoreSession();
+      const restored = restoreSession(storageMode);
       // Only treat this as "a session to resume" if it actually has
       // conversation history. A session persisted before its kickoff turn
-      // ever resolved (e.g. the tab was closed mid-kickoff, or — as
-      // happened during Phase 2 dev — a demo-mode mount's empty state got
-      // saved microseconds before a mode switch remounted into live mode)
-      // parses fine but has an empty transcript; treating *that* as
-      // "restored" would permanently skip the kickoff turn (kickedOffRef
-      // latched true) and leave the session stuck with no opening
-      // question forever. Only a non-empty transcript is real history.
+      // ever resolved (e.g. the tab was closed mid-kickoff) parses fine but
+      // has an empty transcript; treating *that* as "restored" would
+      // permanently skip the kickoff turn (kickedOffRef latched true) and
+      // leave the session stuck with no opening question forever. Only a
+      // non-empty transcript is real history.
+      //
+      // `storageMode` namespaces this lookup so a demo-mode mount's saved
+      // state is never read back by a live-mode mount (or vice versa) —
+      // sessionStorage.ts's header comment has the full history of the bug
+      // this fixes: a shared key let one mode's stale/empty transcript get
+      // "restored" into the other mode's session, latching kickedOffRef and
+      // leaving the shell stuck with no way to progress.
       if (restored && restored.transcript.length > 0) {
         setBeliefState(restored.beliefState);
         setTranscript(restored.transcript);
@@ -201,7 +212,7 @@ export function useSession({
       }
       setRestoredFromStorage(true);
     });
-  }, [disablePersistence]);
+  }, [disablePersistence, storageMode]);
 
   // Kickoff turn: a fresh session (no interaction yet, nothing restored)
   // asks the opening question with no user message (IMPLEMENTATION.md #3 /
@@ -230,8 +241,8 @@ export function useSession({
   // Persist on every settled change.
   useEffect(() => {
     if (disablePersistence) return;
-    saveSession(beliefState, transcript);
-  }, [beliefState, transcript, disablePersistence]);
+    saveSession(storageMode, beliefState, transcript);
+  }, [beliefState, transcript, disablePersistence, storageMode]);
 
   return {
     beliefState,

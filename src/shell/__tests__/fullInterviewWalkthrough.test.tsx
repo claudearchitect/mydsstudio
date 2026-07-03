@@ -31,7 +31,7 @@ function Harness() {
 }
 
 function HarnessInner({ agentRef }: { agentRef: FakeTurnAgent }) {
-  const session = useSession({ agent: agentRef, disablePersistence: true });
+  const session = useSession({ agent: agentRef, storageMode: "demo", disablePersistence: true });
   return (
     <div>
       <ChatPanel
@@ -66,6 +66,18 @@ async function flushMicrotasks() {
   });
 }
 
+/** DevInspectorPanel is collapsed by default (user feedback: it's a
+ * Debug/Developer surface, not something that should dump raw internals in
+ * front of the user on load — see that component's header comment). This
+ * gate's assertions read the outgoing-message list from the DOM, so tests
+ * that need it expand it first, exactly as a developer opening the panel
+ * would. */
+function expandInspector(container: HTMLElement) {
+  act(() => {
+    container.querySelector<HTMLButtonElement>("[data-testid='dev-inspector-toggle']")!.click();
+  });
+}
+
 describe("fake-agent full interview walkthrough", () => {
   it("kicks off with the agent's opening ask (no hardcoded first question)", async () => {
     const { container, unmount } = render(<Harness />);
@@ -81,6 +93,7 @@ describe("fake-agent full interview walkthrough", () => {
   it("chat channel: free-text reply produces a correctly-shaped ChatMessage and advances to a propose interaction with distinct variants", async () => {
     const { container, unmount } = render(<Harness />);
     await flushMicrotasks();
+    expandInspector(container);
 
     const chatInput = container.querySelector<HTMLInputElement>("[data-testid='chat-input-field']")!;
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
@@ -112,6 +125,7 @@ describe("fake-agent full interview walkthrough", () => {
   it("propose -> pick applies the variant's patch (sends a message referencing the pick) and advances the turn", async () => {
     const { container, unmount } = render(<Harness />);
     await flushMicrotasks();
+    expandInspector(container);
 
     // Turn 0 -> 1: get to the propose interaction.
     submitChat(container, "a booking app for dog groomers");
@@ -141,6 +155,7 @@ describe("fake-agent full interview walkthrough", () => {
   it("region channel: clicking the button and commenting reports exactly the manifest-declared groups", async () => {
     const { container, unmount } = render(<Harness />);
     await flushMicrotasks();
+    expandInspector(container);
 
     // Progress far enough that every button.primary manifest dependency
     // (color.primary, color.onPrimary, shape.radius, typography.label,
@@ -205,6 +220,7 @@ describe("fake-agent full interview walkthrough", () => {
       await Promise.resolve();
       await Promise.resolve();
     });
+    expandInspector(container);
 
     const inc = container.querySelector<HTMLButtonElement>("[data-testid='radius-stepper-inc-shape.radius']")!;
 
@@ -243,6 +259,7 @@ describe("fake-agent full interview walkthrough", () => {
   it("all three outgoing channel shapes validate against NormalizedMessageSchema across a mixed sequence", async () => {
     const { container, unmount } = render(<Harness />);
     await flushMicrotasks();
+    expandInspector(container);
 
     submitChat(container, "a booking app for dog groomers");
     await flushMicrotasks();

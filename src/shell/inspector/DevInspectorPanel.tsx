@@ -5,6 +5,13 @@
  * with its channel-specific fields, so all three channels' shapes can be
  * eyeballed against the frozen contract during development and in the
  * fake-agent gate walkthrough.
+ *
+ * Deliberately styled as a muted "debug" affordance, not a normal chrome
+ * surface a first-time user would mistake for a feature: a dashed top
+ * border, a monospace "Debug" eyebrow label, and — the actual fix here —
+ * collapsed by default (user feedback: this was expanded on load, reading
+ * as raw internals dumped in front of the user before they'd done
+ * anything). Still one click away for anyone who does want it.
  */
 "use client";
 
@@ -16,20 +23,28 @@ export interface DevInspectorPanelProps {
 }
 
 export function DevInspectorPanel({ messages }: DevInspectorPanelProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   return (
     <div
-      className="border-t border-app-border bg-app-bg-deep"
+      className="border-t border-dashed border-app-border bg-app-bg-deep/60"
       data-testid="dev-inspector-panel"
     >
       <button
         type="button"
         onClick={() => setCollapsed((c) => !c)}
-        className="flex w-full items-center justify-between px-4 py-2 text-xs text-app-text-muted hover:text-app-text"
+        className="flex w-full items-center justify-between px-4 py-1.5 text-[10px] uppercase tracking-wide text-app-text-muted/70 hover:text-app-text-muted"
         data-testid="dev-inspector-toggle"
       >
-        <span>Outgoing messages ({messages.length})</span>
+        <span className="flex items-center gap-1.5 font-mono normal-case">
+          <span
+            className="rounded-app-sm border border-app-text-muted/40 px-1 text-[9px] font-semibold tracking-wider text-app-text-muted/70"
+            aria-hidden
+          >
+            DEBUG
+          </span>
+          Outgoing messages ({messages.length})
+        </span>
         <span>{collapsed ? "▸" : "▾"}</span>
       </button>
 

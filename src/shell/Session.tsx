@@ -22,6 +22,14 @@
  * priorTurns/turnIndex bookkeeping (RealTurnAgent) — there's no coherent
  * way to splice a mid-session belief state into either turn source in the
  * other's shoes, and it isn't a V0 requirement.
+ *
+ * `useSession`'s localStorage snapshot is namespaced by `mode`
+ * (sessionStorage.ts) so a demo session's saved transcript can never be
+ * "restored" into a live-mode mount or vice versa — see that file's header
+ * comment for the stuck-on-Demo bug this fixes. `autoDemoted` (from
+ * useTurnMode) is surfaced here as a dismissible banner with a "Retry Live"
+ * action rather than silently flipping the toggle, so a failed first live
+ * turn is legible instead of looking like the app is just stuck.
  */
 "use client";
 
@@ -122,6 +130,7 @@ export function Session({ renderComponent }: SessionProps) {
       mode={turnMode.mode}
       liveAvailable={turnMode.liveAvailable}
       resolved={turnMode.resolved}
+      autoDemoted={turnMode.autoDemoted}
       onModeChange={turnMode.setMode}
       onLiveFailure={turnMode.reportLiveFailure}
       onNewSession={() => {
@@ -129,6 +138,7 @@ export function Session({ renderComponent }: SessionProps) {
         setResume({ has: false });
         setPhase("welcome");
       }}
+      onRetryLive={turnMode.retryLive}
       renderComponent={renderComponent}
     />
   );
@@ -138,10 +148,12 @@ interface SessionInnerProps {
   mode: TurnMode;
   liveAvailable: boolean;
   resolved: boolean;
+  autoDemoted: { code: string } | null;
   onModeChange: (mode: TurnMode) => void;
   onLiveFailure: (code: string) => void;
   /** Discard the current session and return to the welcome screen. */
   onNewSession: () => void;
+  onRetryLive: () => void;
   renderComponent?: RenderComponent;
 }
 
@@ -149,9 +161,11 @@ function SessionInner({
   mode,
   liveAvailable,
   resolved,
+  autoDemoted,
   onModeChange,
   onLiveFailure,
   onNewSession,
+  onRetryLive,
   renderComponent,
 }: SessionInnerProps) {
   const agent = useMemo(
@@ -186,7 +200,7 @@ function SessionInner({
     completed,
     sendMessage,
     retry,
-  } = useSession({ agent });
+  } = useSession({ agent, storageMode: mode });
 
   // Stable id for this mounted session — a fresh mount is a fresh session
   // (Session.tsx remounts SessionInner with a new key on start/new-session).
@@ -272,7 +286,11 @@ function SessionInner({
           <div className="flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-app-border px-4 py-2">
               <span className="text-[11px] text-app-text-muted">
-                {mode === "live" ? "Live — talking to Claude" : "Demo — scripted interview, no API key needed"}
+                {mode === "live"
+                  ? "Live — talking to Claude"
+                  : autoDemoted
+                    ? "Demo — Live turned itself off after a failed turn"
+                    : "Demo — scripted interview, no API key needed"}
               </span>
               <ModeToggle
                 mode={mode}
@@ -282,6 +300,25 @@ function SessionInner({
                 onChange={onModeChange}
               />
             </div>
+            {autoDemoted && (
+              <div
+                className="flex items-center justify-between gap-2 border-b border-app-border bg-app-bg-raised px-4 py-2 text-[11px] text-app-text-secondary"
+                data-testid="auto-demoted-banner"
+              >
+                <span>
+                  Live mode failed on its first turn ({autoDemoted.code}) and switched to Demo so you&rsquo;re not
+                  stuck. Fix the API key/server, then:
+                </span>
+                <button
+                  type="button"
+                  onClick={onRetryLive}
+                  className="shrink-0 rounded-app-pill bg-app-bg-input px-2.5 py-1 font-medium text-app-text shadow-app-edge transition hover:text-app-accent"
+                  data-testid="retry-live-button"
+                >
+                  Retry Live
+                </button>
+              </div>
+            )}
             <div className="min-h-0 flex-1">
               <ChatPanel
                 transcript={transcript}
