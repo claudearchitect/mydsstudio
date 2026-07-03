@@ -1,13 +1,16 @@
+"use client";
+
 import { Session } from "@/shell/Session";
+import { renderComponent } from "@/preview/renderComponent";
 
 /**
- * App entry: Workstream B's full two-pane interaction shell.
- *
- * In this phase Session is driven by the fake-agent turn adapter; Phase 2
- * wires it to Workstream C's /api/turn and mounts Workstream A's PreviewPanel
- * into the preview slot. Workstream A's dev FixtureSwitcher (@/preview/
- * FixtureSwitcher) stays available for manually exercising reveal states.
+ * App entry: the full two-pane interaction shell, wired with the real
+ * preview renderer so the live preview AND the in-chat proposal picker
+ * render the enriched component library (not the Phase-0 placeholder).
+ * Session resolves live-vs-demo mode internally (demo is the keyless
+ * fallback). The dev FixtureSwitcher (@/preview/FixtureSwitcher) stays
+ * available for manually exercising reveal states.
  */
 export default function Home() {
-  return <Session />;
+  return <Session renderComponent={renderComponent} />;
 }
