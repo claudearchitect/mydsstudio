@@ -1,5 +1,5 @@
-import { StudioShell } from "@/shell/StudioShell";
+import { Session } from "@/shell/Session";
 
 export default function Home() {
-  return <StudioShell />;
+  return <Session />;
 }
