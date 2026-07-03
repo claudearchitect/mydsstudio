@@ -1,6 +1,16 @@
 /**
  * Fixture: ~0.4 confidence — a couple of visual picks in, color and shape
- * are taking shape but typography/elevation are still unexplored.
+ * are taking shape and typography has a fresh low-confidence guess (from an
+ * offhand aside, not yet confirmed by a proposal pick); elevation is still
+ * unexplored.
+ *
+ * Deliberately touches three groups (not just two) so every manifest
+ * component has all of its dependency groups present but below the sharp
+ * threshold (REVEAL_CONFIG.sharpThreshold = 0.85) — otherwise every
+ * component would derive "absent" (an untouched dependency group) rather
+ * than "blurred", making the gate's "0.4 partially blurred" state
+ * unreachable. See src/preview/revealState.ts and V0_PLAN.md Phase 2 item
+ * "Fix the carried 0.4-fixture flag".
  */
 import type { BeliefState } from "@/contracts";
 
@@ -29,6 +39,14 @@ export const confidence04: BeliefState = {
         radiusPill: { $value: "9999px", $type: "dimension", provenance: ["e08"] },
       },
     },
+    typography: {
+      confidence: 0.3,
+      tokens: {
+        heading: { $value: "20px/600", $type: "fontSize", provenance: ["e09"] },
+        body: { $value: "15px/400", $type: "fontSize", provenance: ["e09"] },
+        label: { $value: "13px/500", $type: "fontSize", provenance: ["e09"] },
+      },
+    },
   },
   rationale: [
     {
@@ -42,6 +60,12 @@ export const confidence04: BeliefState = {
       claim: "soft-rounded shapes chosen twice, said 'friendly, not corporate'",
       tokens: ["shape.radius", "shape.radiusPill"],
       evidence: ["e07", "e08"],
+    },
+    {
+      id: "r03",
+      claim: "guessed a rounded, friendly sans from 'friendly, not corporate' aside — unconfirmed",
+      tokens: ["typography.heading", "typography.body", "typography.label"],
+      evidence: ["e08", "e09"],
     },
   ],
   events: [
@@ -104,6 +128,14 @@ export const confidence04: BeliefState = {
       ts: "2026-07-03T00:00:55.000Z",
       kind: "message",
       payload: { channel: "chat", text: "the rounder one — friendly, not corporate" },
+    },
+    {
+      id: "e09",
+      ts: "2026-07-03T00:00:57.000Z",
+      kind: "update_beliefs",
+      payload: {
+        summary: "low-confidence typography guess inferred from 'friendly, not corporate' aside",
+      },
     },
   ],
 };
